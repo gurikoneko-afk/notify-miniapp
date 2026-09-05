@@ -5,11 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notify</title>
 </head>
+<script
+  charset="utf-8"
+  src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+</script>
 
+<script src="./js/line.js"></script>
+
+<script>
+  initLine()
+    .then((result) => {
+      document.getElementById('status').textContent =
+        result.isInClient
+          ? 'LINE MINI App 接続成功'
+          : 'ブラウザでLIFF初期化成功';
+    })
+    .catch(() => {
+      document.getElementById('status').textContent =
+        'LINE接続に失敗しました';
+    });
+</script>
 <body>
   <main>
     <h1>Notify</h1>
-    <p>MINI App 接続テスト成功</p>
+    <p id="status">LINEへ接続中...</p>
   </main>
 </body>
 </html>
