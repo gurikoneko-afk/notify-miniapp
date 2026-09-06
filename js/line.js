@@ -1,18 +1,31 @@
 const LIFF_ID = '2011459717-DgyR41pJ';
 
-async function initLine() {
-  try {
+window.LineAuthAdapter = {
+  async init() {
     await liff.init({
       liffId: LIFF_ID,
     });
 
     return {
-      isLoggedIn: liff.isLoggedIn(),
+      authenticated: liff.isLoggedIn(),
       isInClient: liff.isInClient(),
-      idToken: liff.getIDToken(),
+      provider: 'line',
     };
-  } catch (error) {
-    console.error('LIFF init failed:', error);
-    throw error;
-  }
-}
+  },
+
+  async getApiAuth() {
+    if (!liff.isLoggedIn()) {
+      throw new Error('AUTH_REQUIRED');
+    }
+
+    const idToken = liff.getIDToken();
+
+    if (!idToken) {
+      throw new Error('LINE_ID_TOKEN_UNAVAILABLE');
+    }
+
+    return {
+      idToken,
+    };
+  },
+};
