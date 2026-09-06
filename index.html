@@ -1,68 +1,63 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Notify</title>
+
+  <link
+    rel="stylesheet"
+    href="./css/style.css?v=4"
+  >
 </head>
 
 <body>
-  <main>
-    <h1>Notify</h1>
 
-    <p id="status">LINEへ接続中...</p>
+  <!-- 各画面を表示する場所 -->
+  <div id="app"></div>
 
-    <button id="apiTestButton" disabled>
-      n8n接続テスト
-    </button>
 
-    <pre id="apiResult"></pre>
-  </main>
+  <!-- 下部メニュー -->
+  <nav class="bottom-nav">
 
-<script
-  charset="utf-8"
-  src="https://static.line-scdn.net/liff/edge/2/sdk.js">
-</script>
+    <a href="#/home">
+      ホーム
+    </a>
 
-<script src="./js/line.js?v=3"></script>
-<script src="./js/auth.js?v=3"></script>
-<script src="./js/api.js?v=3"></script>
+    <a href="#/register">
+      追加
+    </a>
 
-  <script>
-    const status = document.getElementById('status');
-    const button = document.getElementById('apiTestButton');
-    const result = document.getElementById('apiResult');
+    <a href="#/favorites">
+      推し管理
+    </a>
 
-NotifyAuth.init()
-  .then((state) => {
-    status.textContent =
-      state.isInClient
-        ? 'LINE MINI App 接続成功'
-        : '認証初期化成功';
+    <a href="#/plan">
+      プラン
+    </a>
 
-    button.disabled = false;
-  })
-  .catch((error) => {
-    status.textContent =
-      '認証失敗: ' + (error.message || String(error));
-  });
+  </nav>
 
-button.addEventListener('click', async () => {
-  button.disabled = true;
-  result.textContent = '送信中...';
 
-  try {
-    const response = await NotifyApi.home.get();
-
-    result.textContent =
-      JSON.stringify(response, null, 2);
-  } catch (error) {
-    result.textContent =
-      '送信失敗: ' + (error.message || String(error));
-  } finally {
-    button.disabled = false;
-  }
-});
+  <!-- LINE LIFF SDK -->
+  <script
+    charset="utf-8"
+    src="https://static.line-scdn.net/liff/edge/2/sdk.js">
   </script>
+
+
+  <!-- Notify -->
+  <script src="./js/line.js?v=4"></script>
+  <script src="./js/auth.js?v=4"></script>
+  <script src="./js/api.js?v=4"></script>
+  <script src="./js/app.js?v=4"></script>
+
 </body>
+
 </html>
