@@ -1,11 +1,8 @@
-const API_URL = 'https://appreciation-solving-readings-hat.trycloudflare.com/webhook/notify-miniapp-api';
+const API_URL =
+  'https://appreciation-solving-readings-hat.trycloudflare.com/webhook/notify-miniapp-api';
 
 async function callNotifyApi(action, payload = {}) {
-  const idToken = liff.getIDToken();
-
-  if (!idToken) {
-    throw new Error('LINE ID tokenを取得できませんでした');
-  }
+  const auth = await window.NotifyAuth.getApiAuth();
 
   const response = await fetch(API_URL, {
     method: 'POST',
@@ -15,13 +12,33 @@ async function callNotifyApi(action, payload = {}) {
     body: JSON.stringify({
       action,
       payload,
-      idToken,
+      ...auth,
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error('INVALID_API_RESPONSE');
   }
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(
+      result?.code || `API_ERROR_${response.status}`
+    );
+  }
+
+  return result;
 }
+
+window.NotifyApi = {
+  call: callNotifyApi,
+
+  home: {
+    get() {
+      return callNotifyApi('home.get');
+    },
+  },
+};
