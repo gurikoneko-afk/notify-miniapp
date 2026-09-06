@@ -5,30 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notify</title>
 </head>
-<script
-  charset="utf-8"
-  src="https://static.line-scdn.net/liff/edge/2/sdk.js">
-</script>
 
-<script src="./js/line.js"></script>
-
-<script>
-  initLine()
-    .then((result) => {
-      document.getElementById('status').textContent =
-        result.isInClient
-          ? 'LINE MINI App 接続成功'
-          : 'ブラウザでLIFF初期化成功';
-    })
-    .catch(() => {
-      document.getElementById('status').textContent =
-        'LINE接続に失敗しました';
-    });
-</script>
 <body>
   <main>
     <h1>Notify</h1>
+
     <p id="status">LINEへ接続中...</p>
+
+    <button id="apiTestButton" disabled>
+      n8n接続テスト
+    </button>
+
+    <pre id="apiResult"></pre>
   </main>
+
+  <script
+    charset="utf-8"
+    src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+  </script>
+
+  <script src="./js/line.js"></script>
+  <script src="./js/api.js"></script>
+
+  <script>
+    const status = document.getElementById('status');
+    const button = document.getElementById('apiTestButton');
+    const result = document.getElementById('apiResult');
+
+    initLine()
+      .then(() => {
+        status.textContent = 'LINE MINI App 接続成功';
+        button.disabled = false;
+      })
+      .catch((error) => {
+        status.textContent =
+          'LINE接続失敗: ' + (error.message || String(error));
+      });
+
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      result.textContent = '送信中...';
+
+      try {
+        const response = await callNotifyApi('home.get', {});
+
+        result.textContent =
+          JSON.stringify(response, null, 2);
+      } catch (error) {
+        result.textContent =
+          '送信失敗: ' + (error.message || String(error));
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
