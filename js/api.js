@@ -1,4 +1,4 @@
-const API_URL = 'https://appreciation-solving-readings-hat.trycloudflare.com';
+const API_URL = 'https://appreciation-solving-readings-hat.trycloudflare.com/webhook/notify-miniapp-api';
 
 async function callNotifyApi(action, payload = {}) {
   const idToken = liff.getIDToken();
