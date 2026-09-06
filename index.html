@@ -19,45 +19,50 @@
     <pre id="apiResult"></pre>
   </main>
 
-  <script
-    charset="utf-8"
-    src="https://static.line-scdn.net/liff/edge/2/sdk.js">
-  </script>
+<script
+  charset="utf-8"
+  src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+</script>
 
-  <script src="./js/line.js"></script>
-  <script src="./js/api.js?v=2"></script>
+<script src="./js/line.js?v=3"></script>
+<script src="./js/auth.js?v=3"></script>
+<script src="./js/api.js?v=3"></script>
 
   <script>
     const status = document.getElementById('status');
     const button = document.getElementById('apiTestButton');
     const result = document.getElementById('apiResult');
 
-    initLine()
-      .then(() => {
-        status.textContent = 'LINE MINI App 接続成功';
-        button.disabled = false;
-      })
-      .catch((error) => {
-        status.textContent =
-          'LINE接続失敗: ' + (error.message || String(error));
-      });
+NotifyAuth.init()
+  .then((state) => {
+    status.textContent =
+      state.isInClient
+        ? 'LINE MINI App 接続成功'
+        : '認証初期化成功';
 
-    button.addEventListener('click', async () => {
-      button.disabled = true;
-      result.textContent = '送信中...';
+    button.disabled = false;
+  })
+  .catch((error) => {
+    status.textContent =
+      '認証失敗: ' + (error.message || String(error));
+  });
 
-      try {
-        const response = await callNotifyApi('home.get', {});
+button.addEventListener('click', async () => {
+  button.disabled = true;
+  result.textContent = '送信中...';
 
-        result.textContent =
-          JSON.stringify(response, null, 2);
-      } catch (error) {
-        result.textContent =
-          '送信失敗: ' + (error.message || String(error));
-      } finally {
-        button.disabled = false;
-      }
-    });
+  try {
+    const response = await NotifyApi.home.get();
+
+    result.textContent =
+      JSON.stringify(response, null, 2);
+  } catch (error) {
+    result.textContent =
+      '送信失敗: ' + (error.message || String(error));
+  } finally {
+    button.disabled = false;
+  }
+});
   </script>
 </body>
 </html>
