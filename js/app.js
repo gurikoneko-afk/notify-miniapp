@@ -284,7 +284,7 @@ function renderRoute() {
   const button = createElement(
     'button',
     'retry-button',
-    '池田エライザでテスト'
+    '矢田 萌華でテスト'
   );
 
   const result = createElement(
@@ -301,7 +301,7 @@ function renderRoute() {
       const response = await NotifyApi.call(
         'favorite.resolve',
         {
-          input: '池田エライザ'
+          input: '矢田 萌華'
         }
       );
 
