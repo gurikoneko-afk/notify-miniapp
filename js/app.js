@@ -266,9 +266,66 @@ function renderRoute() {
       renderHome();
       break;
 
+      function renderRegisterTest() {
+  const app = document.getElementById('app');
+
+  const page = createElement('main', 'page');
+
+  page.append(
+    createElement('h1', 'logo', 'Notify'),
+    createElement('h2', 'page-title', '推しを追加'),
+    createElement(
+      'p',
+      'empty-message',
+      'favorite.resolve の接続テスト'
+    )
+  );
+
+  const button = createElement(
+    'button',
+    'retry-button',
+    'パペットスンスンでテスト'
+  );
+
+  const result = createElement(
+    'pre',
+    'test-result',
+    ''
+  );
+
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    result.textContent = '送信中...';
+
+    try {
+      const response = await NotifyApi.call(
+        'favorite.resolve',
+        {
+          input: 'パペットスンスン'
+        }
+      );
+
+      result.textContent =
+        JSON.stringify(response, null, 2);
+
+    } catch (error) {
+      result.textContent =
+        '送信失敗: ' +
+        (error.message || String(error));
+
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  page.append(button, result);
+
+  app.replaceChildren(page);
+}
+
     case '#/register':
-      renderComingSoon('推しを追加');
-      break;
+ 　　　 renderRegisterTest();
+ 　　　 break;
 
     case '#/favorites':
       renderComingSoon('推し管理');
