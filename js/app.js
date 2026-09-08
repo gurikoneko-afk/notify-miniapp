@@ -404,8 +404,9 @@ function renderRegister() {
   );
 
   const personBirthDate = createField(
-    '生年月日',
-    '例：1995年1月1日'
+  '生年月日',
+  '',
+  'date'
   );
 
   const personOrigin = createField(
