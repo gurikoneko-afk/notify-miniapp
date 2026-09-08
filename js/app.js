@@ -702,6 +702,456 @@ function renderRegister() {
 
     return hints;
   }
+function showRegisterStep2(resolveData) {
+  resultArea.replaceChildren();
+
+  const draftId = resolveData?.draftId;
+  const targetName =
+    resolveData?.target?.name ?? '名称未取得';
+
+  const highSpeed =
+    resolveData?.highSpeed ?? {};
+
+  if (!draftId) {
+    message.textContent =
+      '登録情報を確認できませんでした';
+
+    message.hidden = false;
+    return;
+  }
+
+  const remaining =
+    Number(highSpeed.remaining ?? 0);
+
+  const highSpeedAvailable =
+    highSpeed.available === true &&
+    remaining > 0;
+
+  const card = createElement(
+    'section',
+    'card register-step2'
+  );
+
+  card.append(
+    createElement(
+      'p',
+      'section-label',
+      '確認できました'
+    ),
+    createElement(
+      'h2',
+      'favorite-name',
+      targetName
+    )
+  );
+
+  // -------------------------
+  // 通知設定
+  // -------------------------
+
+  card.append(
+    createElement(
+      'h3',
+      'section-title',
+      '通知設定'
+    )
+  );
+
+  const priorityRow = createElement(
+    'div',
+    'notification-setting-row'
+  );
+
+  priorityRow.append(
+    createElement(
+      'div',
+      'notification-setting-info'
+    )
+  );
+
+  priorityRow.firstChild.append(
+    createElement(
+      'strong',
+      '',
+      '✓ 重要な速報'
+    ),
+    createElement(
+      'p',
+      'empty-message',
+      '大きな発表・販売開始・重要な変更などを通知します'
+    )
+  );
+
+  const digestRow = createElement(
+    'div',
+    'notification-setting-row'
+  );
+
+  digestRow.append(
+    createElement(
+      'div',
+      'notification-setting-info'
+    )
+  );
+
+  digestRow.firstChild.append(
+    createElement(
+      'strong',
+      '',
+      '✓ 通常の情報'
+    ),
+    createElement(
+      'p',
+      'empty-message',
+      'その他の確定情報をまとめて通知します'
+    )
+  );
+
+  // -------------------------
+  // 高速監視
+  // -------------------------
+
+  const highSpeedRow = createElement(
+    'div',
+    'notification-setting-row'
+  );
+
+  const highSpeedInfo = createElement(
+    'div',
+    'notification-setting-info'
+  );
+
+  highSpeedInfo.append(
+    createElement(
+      'strong',
+      '',
+      '高速監視オプション'
+    ),
+    createElement(
+      'p',
+      'empty-message',
+      '約5分間隔でチェックします'
+    )
+  );
+
+  const highSpeedStatus = createElement(
+    'p',
+    'empty-message',
+    highSpeedAvailable
+      ? `残り ${remaining}枠`
+      : '利用できる枠がありません'
+  );
+
+  highSpeedInfo.append(highSpeedStatus);
+
+  const highSpeedToggle =
+    createElement(
+      'input',
+      'high-speed-toggle'
+    );
+
+  highSpeedToggle.type = 'checkbox';
+  highSpeedToggle.checked = false;
+  highSpeedToggle.disabled =
+    !highSpeedAvailable;
+
+  highSpeedRow.append(
+    highSpeedInfo,
+    highSpeedToggle
+  );
+
+  card.append(
+    priorityRow,
+    digestRow,
+    highSpeedRow
+  );
+
+  // -------------------------
+  // 登録メッセージ
+  // -------------------------
+
+  const registerMessage =
+    createElement(
+      'p',
+      'error-message',
+      ''
+    );
+
+  registerMessage.hidden = true;
+
+  const registerButton =
+    createElement(
+      'button',
+      'primary-action',
+      '登録する'
+    );
+
+  registerButton.type = 'button';
+
+  // -------------------------
+  // 登録実行
+  // -------------------------
+
+  registerButton.addEventListener(
+    'click',
+    async () => {
+      registerMessage.hidden = true;
+      registerMessage.textContent = '';
+
+      registerButton.disabled = true;
+      registerButton.textContent =
+        '登録中...';
+
+      highSpeedToggle.disabled = true;
+
+      try {
+        const response =
+          await NotifyApi.call(
+            'favorite.register',
+            {
+              draftId,
+
+              notificationSettings: {
+                schemaVersion: 1,
+                priorityDelivery:
+                  'immediate',
+
+                digestFrequency:
+                  'standard',
+
+                highSpeedMonitoring:
+                  highSpeedToggle.checked,
+              },
+            }
+          );
+
+        if (response.ok === true) {
+          const completed =
+            createElement(
+              'section',
+              'card'
+            );
+
+          completed.append(
+            createElement(
+              'h2',
+              'page-title',
+              '登録しました'
+            ),
+            createElement(
+              'p',
+              'favorite-name',
+              targetName
+            ),
+            createElement(
+              'p',
+              'empty-message',
+              highSpeedToggle.checked
+                ? '高速監視オプションを使用します'
+                : '通常のチェックで登録しました'
+            ),
+            createLink(
+              '#/home',
+              'primary-action',
+              'ホームへ戻る'
+            ),
+            createLink(
+              '#/favorites',
+              'secondary-action',
+              '推し管理を見る'
+            )
+          );
+
+          resultArea.replaceChildren(
+            completed
+          );
+
+          return;
+        }
+
+        // -------------------------
+        // 高速枠不足
+        // -------------------------
+
+        if (
+          response.code ===
+          'HIGH_SPEED_LIMIT'
+        ) {
+          highSpeedToggle.checked = false;
+          highSpeedToggle.disabled = true;
+
+          registerMessage.textContent =
+            '高速監視オプションの枠がいっぱいです。通常のチェックなら登録できます。';
+
+          registerMessage.hidden = false;
+
+          registerButton.disabled = false;
+          registerButton.textContent =
+            '通常のチェックで登録する';
+
+          return;
+        }
+
+        // -------------------------
+        // 重複
+        // -------------------------
+
+        if (
+          response.code ===
+          'DUPLICATE'
+        ) {
+          resultArea.replaceChildren(
+            createElement(
+              'p',
+              'error-message',
+              response.message ??
+                'この推しはすでに登録されています'
+            ),
+            createLink(
+              '#/favorites',
+              'secondary-action',
+              '推し管理を見る'
+            )
+          );
+
+          return;
+        }
+
+        // -------------------------
+        // 推し枠不足
+        // -------------------------
+
+        if (
+          response.code ===
+          'TARGET_LIMIT'
+        ) {
+          resultArea.replaceChildren(
+            createElement(
+              'p',
+              'error-message',
+              response.message ??
+                '推しの登録枠がいっぱいです'
+            ),
+            createLink(
+              '#/plan',
+              'primary-action',
+              'プランを見る'
+            )
+          );
+
+          return;
+        }
+
+        // -------------------------
+        // Draftが無効
+        // -------------------------
+
+        if (
+          response.code ===
+          'DRAFT_NOT_FOUND'
+        ) {
+          resultArea.replaceChildren(
+            createElement(
+              'p',
+              'error-message',
+              '登録情報の有効期限が切れたか、すでに処理されています'
+            )
+          );
+
+          const restart =
+            createElement(
+              'button',
+              'secondary-action',
+              '最初からやり直す'
+            );
+
+          restart.type = 'button';
+
+          restart.addEventListener(
+            'click',
+            renderRegister
+          );
+
+          resultArea.append(restart);
+
+          return;
+        }
+
+        // -------------------------
+        // 契約なし
+        // -------------------------
+
+        if (
+          response.code ===
+          'SUBSCRIPTION_REQUIRED'
+        ) {
+          resultArea.replaceChildren(
+            createElement(
+              'p',
+              'error-message',
+              response.message ??
+                '利用できるプランがありません'
+            ),
+            createLink(
+              '#/plan',
+              'primary-action',
+              'プランを見る'
+            )
+          );
+
+          return;
+        }
+
+        registerMessage.textContent =
+          response.message ??
+          '登録できませんでした';
+
+        registerMessage.hidden = false;
+
+      } catch (error) {
+        registerMessage.textContent =
+          '通信に失敗しました。もう一度お試しください';
+
+        registerMessage.hidden = false;
+
+      } finally {
+        if (
+          resultArea.contains(card)
+        ) {
+          registerButton.disabled = false;
+
+          if (
+            registerButton.textContent ===
+            '登録中...'
+          ) {
+            registerButton.textContent =
+              '登録する';
+          }
+
+          if (
+            highSpeedAvailable &&
+            registerButton.textContent !==
+              '通常のチェックで登録する'
+          ) {
+            highSpeedToggle.disabled =
+              false;
+          }
+        }
+      }
+    }
+  );
+
+  card.append(
+    registerMessage,
+    registerButton
+  );
+
+  resultArea.append(card);
+
+  // STEP1を再送しないようにする
+  button.disabled = true;
+  button.hidden = true;
+}
 
   async function resolveFavorite() {
     const rawInput =
