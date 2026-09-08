@@ -1248,47 +1248,9 @@ function showRegisterStep2(resolveData) {
       );
 
       if (response.ok === true) {
-        const targetName =
-          response.data?.target?.name ??
-          '名称未取得';
-
-        const successCard = createElement(
-          'div',
-          'card'
-        );
-
-        successCard.append(
-          createElement(
-            'p',
-            'section-label',
-            '確認できました'
-          ),
-          createElement(
-            'h2',
-            'favorite-name',
-            targetName
-          )
-        );
-
-        const highSpeed =
-          response.data?.highSpeed;
-
-        if (highSpeed) {
-          successCard.append(
-            createElement(
-              'p',
-              'empty-message',
-              `高速監視オプション：残り ${highSpeed.remaining ?? 0}枠`
-            )
-          );
-        }
-
-        resultArea.append(
-          successCard
-        );
-
-        return;
-      }
+  showRegisterStep2(response.data);
+  return;
+}
 
       if (
         response.code ===
