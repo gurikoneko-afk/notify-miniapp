@@ -1494,6 +1494,10 @@ async function renderStart() {
   }
 }
 
+async function renderPlan() {
+  // ここに本物のプラン画面
+}
+
 function renderComingSoon(title) {
   const app = document.getElementById('app');
 
@@ -1547,7 +1551,7 @@ function renderRoute() {
       break;
 
     case '#/plan':
-      renderComingSoon('プラン');
+      renderPlan();
       break;
 
     default:
