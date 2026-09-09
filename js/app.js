@@ -1404,6 +1404,96 @@ function showRegisterStep2(resolveData) {
   nameField.field.focus();
 }
 
+async function renderStart() {
+  const app = document.getElementById('app');
+
+  app.replaceChildren(
+    createElement(
+      'p',
+      'loading',
+      'Notifyを準備しています...'
+    )
+  );
+
+  try {
+    const response =
+      await NotifyApi.home.get();
+
+    if (response?.ok !== true) {
+      throw new Error(
+        response?.code || 'API_ERROR'
+      );
+    }
+
+    const data = response.data ?? {};
+
+    // -------------------------
+    // 契約なし
+    // -------------------------
+
+    if (!data.plan) {
+      location.hash = '#/plan';
+      return;
+    }
+
+    // -------------------------
+    // 契約あり・推し0件
+    // -------------------------
+
+    const favoriteUsed =
+      Number(
+        data.favorites?.used ?? 0
+      );
+
+    if (favoriteUsed === 0) {
+      location.hash = '#/register';
+      return;
+    }
+
+    // -------------------------
+    // 既に利用中
+    // -------------------------
+
+    location.hash = '#/home';
+
+  } catch (error) {
+    const page = createElement(
+      'main',
+      'page'
+    );
+
+    page.append(
+      createElement(
+        'h1',
+        'logo',
+        'Notify'
+      ),
+      createElement(
+        'p',
+        'error-message',
+        'Notifyを開始できませんでした'
+      )
+    );
+
+    const retry = createElement(
+      'button',
+      'retry-button',
+      '再試行'
+    );
+
+    retry.type = 'button';
+
+    retry.addEventListener(
+      'click',
+      renderStart
+    );
+
+    page.append(retry);
+
+    app.replaceChildren(page);
+  }
+}
+
 function renderComingSoon(title) {
   const app = document.getElementById('app');
 
@@ -1440,6 +1530,10 @@ function renderRoute() {
   updateActiveNav();
 
   switch (route) {
+    case '#/start':
+      renderStart();
+      break;
+  
     case '#/home':
       renderHome();
       break;
