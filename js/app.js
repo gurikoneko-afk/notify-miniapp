@@ -1495,7 +1495,294 @@ async function renderStart() {
 }
 
 async function renderPlan() {
-  // ここに本物のプラン画面
+  const app = document.getElementById('app');
+
+  app.replaceChildren(
+    createElement(
+      'p',
+      'loading',
+      'プラン情報を読み込み中...'
+    )
+  );
+
+  try {
+    const response =
+      await NotifyApi.plan.get();
+
+    if (response?.ok !== true) {
+      throw new Error(
+        response?.code || 'API_ERROR'
+      );
+    }
+
+    const data = response.data ?? {};
+    const current = data.current ?? null;
+    const plans = Array.isArray(data.plans)
+      ? data.plans
+      : [];
+
+    const page = createElement(
+      'main',
+      'page'
+    );
+
+    page.append(
+      createElement(
+        'h1',
+        'logo',
+        'Notify'
+      ),
+      createElement(
+        'h2',
+        'page-title',
+        current
+          ? 'プラン・利用状況'
+          : 'プランを選ぶ'
+      )
+    );
+
+    // -------------------------
+    // 現在の契約
+    // -------------------------
+
+    if (current) {
+      const currentCard = createElement(
+        'section',
+        'card usage-card'
+      );
+
+      currentCard.append(
+        createElement(
+          'p',
+          'section-label',
+          '現在のプラン'
+        ),
+        createElement(
+          'h2',
+          'plan-name',
+          current.name ?? '名称未取得'
+        ),
+        createElement(
+          'p',
+          'empty-message',
+          `推し ${current.targetLimit ?? 0}枠`
+        ),
+        createElement(
+          'p',
+          'empty-message',
+          `高速監視オプション ${current.includedHighSpeedSlots ?? 0}枠`
+        )
+      );
+
+      if (
+        Number.isFinite(
+          Number(current.monthlyPrice)
+        )
+      ) {
+        currentCard.append(
+          createElement(
+            'strong',
+            'usage-value',
+            `¥${Number(
+              current.monthlyPrice
+            ).toLocaleString('ja-JP')} / 月`
+          )
+        );
+      }
+
+      if (current.currentPeriodEnd) {
+        const date =
+          new Date(current.currentPeriodEnd);
+
+        if (!Number.isNaN(date.getTime())) {
+          currentCard.append(
+            createElement(
+              'p',
+              'empty-message',
+              `現在の契約期間：${date.toLocaleDateString(
+                'ja-JP'
+              )}まで`
+            )
+          );
+        }
+      }
+
+      page.append(currentCard);
+    } else {
+      page.append(
+        createElement(
+          'p',
+          'empty-message',
+          '利用するプランを選んでください'
+        )
+      );
+    }
+
+    // -------------------------
+    // プラン一覧
+    // -------------------------
+
+    const plansSection = createElement(
+      'section',
+      'recent-section'
+    );
+
+    plansSection.append(
+      createElement(
+        'h2',
+        'section-title',
+        '料金プラン'
+      )
+    );
+
+    const planMessage = createElement(
+      'p',
+      'error-message',
+      ''
+    );
+
+    planMessage.hidden = true;
+
+    plans.forEach(plan => {
+      const card = createElement(
+        'div',
+        'card'
+      );
+
+      card.append(
+        createElement(
+          'h3',
+          'plan-name',
+          plan.name ?? 'プラン'
+        )
+      );
+
+      card.append(
+        createElement(
+          'strong',
+          'usage-value',
+          `¥${Number(
+            plan.monthlyPrice ?? 0
+          ).toLocaleString('ja-JP')} / 月`
+        ),
+        createElement(
+          'p',
+          'empty-message',
+          `推し ${plan.targetLimit ?? 0}枠`
+        ),
+        createElement(
+          'p',
+          'empty-message',
+          `高速監視オプション ${plan.includedHighSpeedSlots ?? 0}枠付き`
+        )
+      );
+
+      const isCurrent =
+        current?.planId === plan.id;
+
+      const selectButton =
+        createElement(
+          'button',
+          isCurrent
+            ? 'secondary-action'
+            : 'primary-action',
+          isCurrent
+            ? '利用中'
+            : 'このプランを選ぶ'
+        );
+
+      selectButton.type = 'button';
+      selectButton.disabled = isCurrent;
+
+      if (!isCurrent) {
+        selectButton.addEventListener(
+          'click',
+          () => {
+            planMessage.textContent =
+              '決済機能は現在準備中です';
+
+            planMessage.hidden = false;
+          }
+        );
+      }
+
+      card.append(selectButton);
+
+      plansSection.append(card);
+    });
+
+    // -------------------------
+    // 高速監視追加枠
+    // -------------------------
+
+    const addonCard = createElement(
+      'div',
+      'card'
+    );
+
+    addonCard.append(
+      createElement(
+        'h3',
+        'plan-name',
+        '高速監視オプション追加'
+      ),
+      createElement(
+        'strong',
+        'usage-value',
+        '＋¥200 / 月 / 1枠'
+      ),
+      createElement(
+        'p',
+        'empty-message',
+        '高速監視オプションの利用枠を追加できます'
+      )
+    );
+
+    plansSection.append(
+      addonCard,
+      planMessage
+    );
+
+    page.append(plansSection);
+
+    app.replaceChildren(page);
+
+  } catch (error) {
+    const page = createElement(
+      'main',
+      'page'
+    );
+
+    page.append(
+      createElement(
+        'h1',
+        'logo',
+        'Notify'
+      ),
+      createElement(
+        'p',
+        'error-message',
+        'プラン情報を読み込めませんでした'
+      )
+    );
+
+    const retry = createElement(
+      'button',
+      'retry-button',
+      '再試行'
+    );
+
+    retry.type = 'button';
+
+    retry.addEventListener(
+      'click',
+      renderPlan
+    );
+
+    page.append(retry);
+
+    app.replaceChildren(page);
+  }
 }
 
 function renderComingSoon(title) {
