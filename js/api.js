@@ -41,4 +41,10 @@ window.NotifyApi = {
       return callNotifyApi('home.get');
     },
   },
+
+  plan: {
+    get() {
+      return callNotifyApi('plan.get');
+    },
+  },
 };
