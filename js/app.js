@@ -967,23 +967,23 @@ digestRow.append(
               draftId,
 
               notificationSettings: {
-               schemaVersion: 2,
-               priorityDelivery:
-                'immediate',
+  schemaVersion: 2,
+  priorityDelivery:
+    'immediate',
 
-              digestDelivery:
-               digestDailyRadio.checked
-               ? 'daily'
-               : 'off',
+  digestDelivery:
+    digestDailyRadio.checked
+      ? 'daily'
+      : 'off',
 
-              digestTime:
-               digestDailyRadio.checked
-               ? '21:00'
-               : null,
+  digestTime:
+    digestDailyRadio.checked
+      ? '21:00'
+      : null,
 
-              highSpeedMonitoring:
-               highSpeedToggle.checked,
-            },
+  highSpeedMonitoring:
+    highSpeedToggle.checked,
+},
             }
           );
 
