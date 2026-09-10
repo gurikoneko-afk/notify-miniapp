@@ -46,5 +46,21 @@ window.NotifyApi = {
     get() {
       return callNotifyApi('plan.get');
     },
+
+    select(planId) {
+      return callNotifyApi(
+        'plan.select',
+        { planId }
+      );
+    },
+  },
+
+  purchase: {
+    start(planId) {
+      return callNotifyApi(
+        'purchase.start',
+        { planId }
+      );
+    },
   },
 };
