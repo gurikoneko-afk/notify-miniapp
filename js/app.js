@@ -1695,16 +1695,111 @@ async function renderPlan() {
       selectButton.disabled = isCurrent;
 
       if (!isCurrent) {
-        selectButton.addEventListener(
-          'click',
-          () => {
-            planMessage.textContent =
-              '決済機能は現在準備中です';
+  selectButton.addEventListener(
+    'click',
+    async () => {
+      planMessage.hidden = true;
+      planMessage.textContent = '';
 
-            planMessage.hidden = false;
-          }
-        );
+      selectButton.disabled = true;
+      const originalText =
+        selectButton.textContent;
+
+      selectButton.textContent =
+        '確認中...';
+
+      try {
+        // ① 選択プランをサーバー側で確認
+        const selectResponse =
+          await NotifyApi.plan.select(
+            plan.id
+          );
+
+        if (selectResponse?.ok !== true) {
+          planMessage.textContent =
+            selectResponse?.message ??
+            'プランを選択できませんでした';
+
+          planMessage.hidden = false;
+          return;
+        }
+
+        const selectedPlanId =
+          selectResponse.data
+            ?.selection
+            ?.planId;
+
+        if (!selectedPlanId) {
+          planMessage.textContent =
+            'プラン情報を確認できませんでした';
+
+          planMessage.hidden = false;
+          return;
+        }
+
+        // ② 決済開始
+        selectButton.textContent =
+          '決済を準備中...';
+
+        const purchaseResponse =
+          await NotifyApi.purchase.start(
+            selectedPlanId
+          );
+
+        // 現在はPayment Adapter未接続なので正常
+        if (
+          purchaseResponse?.code ===
+          'PAYMENT_NOT_CONFIGURED'
+        ) {
+          planMessage.textContent =
+            'プラン選択まで確認できました。決済機能は現在準備中です';
+
+          planMessage.hidden = false;
+          return;
+        }
+
+        // 既に契約あり
+        if (
+          purchaseResponse?.code ===
+          'SUBSCRIPTION_EXISTS'
+        ) {
+          planMessage.textContent =
+            purchaseResponse.message ??
+            'すでに利用中のプランがあります';
+
+          planMessage.hidden = false;
+          return;
+        }
+
+        if (purchaseResponse?.ok !== true) {
+          planMessage.textContent =
+            purchaseResponse?.message ??
+            '決済を開始できませんでした';
+
+          planMessage.hidden = false;
+          return;
+        }
+
+        // 将来Payment Adapter実装時にここへ続ける
+        planMessage.textContent =
+          '決済準備が完了しました';
+
+        planMessage.hidden = false;
+
+      } catch (error) {
+        planMessage.textContent =
+          '通信に失敗しました。もう一度お試しください';
+
+        planMessage.hidden = false;
+
+      } finally {
+        selectButton.disabled = false;
+        selectButton.textContent =
+          originalText;
       }
+    }
+  );
+}
 
       card.append(selectButton);
 
