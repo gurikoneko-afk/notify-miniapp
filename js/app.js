@@ -549,11 +549,15 @@ function renderRegister() {
   );
 
   const officialUrl = createField(
-    '公式URL',
-    'https://...',
-    'url',
-    500
-  );
+  '公式URL',
+  'https://...',
+  'text',
+  500
+);
+
+officialUrl.field.inputMode = 'url';
+officialUrl.field.autocapitalize = 'none';
+officialUrl.field.spellcheck = false;
 
   const noteWrapper = createElement(
     'div',
