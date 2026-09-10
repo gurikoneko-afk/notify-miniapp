@@ -783,29 +783,84 @@ function showRegisterStep2(resolveData) {
   );
 
   const digestRow = createElement(
-    'div',
-    'notification-setting-row'
-  );
+  'div',
+  'notification-setting-row'
+);
 
-  digestRow.append(
-    createElement(
-      'div',
-      'notification-setting-info'
-    )
-  );
+const digestInfo = createElement(
+  'div',
+  'notification-setting-info'
+);
 
-  digestRow.firstChild.append(
-    createElement(
-      'strong',
-      '',
-      '✓ 通常の情報'
-    ),
-    createElement(
-      'p',
-      'empty-message',
-      'その他の確定情報をまとめて通知します'
-    )
-  );
+digestInfo.append(
+  createElement(
+    'strong',
+    '',
+    'その他の情報'
+  ),
+  createElement(
+    'p',
+    'empty-message',
+    '通知方法を選べます'
+  )
+);
+
+const digestOptions = createElement(
+  'div',
+  'digest-options'
+);
+
+// 21時まとめ
+const digestDailyLabel =
+  document.createElement('label');
+
+const digestDailyRadio =
+  document.createElement('input');
+
+digestDailyRadio.type = 'radio';
+digestDailyRadio.name = 'digest-delivery';
+digestDailyRadio.value = 'daily';
+digestDailyRadio.checked = true;
+
+digestDailyLabel.append(
+  digestDailyRadio,
+  document.createTextNode(
+    ' 21時にまとめて通知'
+  )
+);
+
+// 通知しない
+const digestOffLabel =
+  document.createElement('label');
+
+const digestOffRadio =
+  document.createElement('input');
+
+digestOffRadio.type = 'radio';
+digestOffRadio.name = 'digest-delivery';
+digestOffRadio.value = 'off';
+
+digestOffLabel.append(
+  digestOffRadio,
+  document.createTextNode(
+    ' 通知しない'
+  )
+);
+
+digestOptions.append(
+  digestDailyLabel,
+  digestOffLabel,
+  createElement(
+    'p',
+    'empty-message',
+    'どちらを選んでも更新情報はいつでも確認できます'
+  )
+);
+
+digestRow.append(
+  digestInfo,
+  digestOptions
+);
 
   // -------------------------
   // 高速監視
@@ -912,16 +967,23 @@ function showRegisterStep2(resolveData) {
               draftId,
 
               notificationSettings: {
-                schemaVersion: 1,
-                priorityDelivery:
-                  'immediate',
+               schemaVersion: 2,
+               priorityDelivery:
+                'immediate',
 
-                digestFrequency:
-                  'standard',
+              digestDelivery:
+               digestDailyRadio.checked
+               ? 'daily'
+               : 'off',
 
-                highSpeedMonitoring:
-                  highSpeedToggle.checked,
-              },
+              digestTime:
+               digestDailyRadio.checked
+               ? '21:00'
+               : null,
+
+              highSpeedMonitoring:
+               highSpeedToggle.checked,
+            },
             }
           );
 
