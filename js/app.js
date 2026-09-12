@@ -2323,10 +2323,6 @@ async function renderFavorites() {
 
             settingsPanel.hidden = true;
 
-          } catch (error) {
-            window.alert(
-              '通知設定を変更できませんでした。もう一度お試しください。'
-            );
           } finally {
             saveButton.disabled = false;
             cancelButton.disabled = false;
