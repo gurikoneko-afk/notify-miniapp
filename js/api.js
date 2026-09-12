@@ -41,7 +41,25 @@ window.NotifyApi = {
       return callNotifyApi('home.get');
     },
   },
+  
+favorite: {
+  list() {
+    return callNotifyApi(
+      'favorite.list'
+    );
+  },
 
+  setEnabled(favoriteId, enabled) {
+    return callNotifyApi(
+      'favorite.enabled.set',
+      {
+        favoriteId,
+        enabled
+      }
+    );
+  },
+},
+  
   plan: {
     get() {
       return callNotifyApi('plan.get');
