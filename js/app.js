@@ -1946,6 +1946,172 @@ async function renderPlan() {
   }
 }
 
+async function renderFavorites() {
+  const app = document.getElementById('app');
+
+  app.replaceChildren(
+    createElement(
+      'p',
+      'loading',
+      '推し情報を読み込み中...'
+    )
+  );
+
+  try {
+    const response =
+      await NotifyApi.favorite.list();
+
+    if (response?.ok !== true) {
+      throw new Error(
+        response?.code || 'API_ERROR'
+      );
+    }
+
+    const favorites =
+      Array.isArray(response?.data?.favorites)
+        ? response.data.favorites
+        : [];
+
+    const page = createElement(
+      'main',
+      'page'
+    );
+
+    page.append(
+      createElement(
+        'h1',
+        'logo',
+        'Notify'
+      ),
+      createElement(
+        'h2',
+        'page-title',
+        '推し管理'
+      )
+    );
+
+    // 登録0件
+    if (favorites.length === 0) {
+      page.append(
+        createElement(
+          'p',
+          'empty-message',
+          '登録中の推しはいません'
+        )
+      );
+
+      app.replaceChildren(page);
+      return;
+    }
+
+    for (const favorite of favorites) {
+      const card = createElement(
+        'section',
+        'card'
+      );
+
+      const settings =
+        favorite?.notificationSettings ?? {};
+
+      const digestText =
+        settings.digestDelivery === 'daily'
+          ? '21時まとめ'
+          : '通知しない';
+
+      const highSpeedText =
+        settings.highSpeedMonitoring === true
+          ? 'ON'
+          : 'OFF';
+
+      const statusText =
+        favorite.enabled === true
+          ? 'Monitoring中'
+          : '停止中';
+
+      card.append(
+        createElement(
+          'h2',
+          '',
+          favorite.canonicalName ??
+            '名称未取得'
+        ),
+        createElement(
+          'p',
+          '',
+          statusText
+        ),
+        createElement(
+          'p',
+          '',
+          `通常情報：${digestText}`
+        ),
+        createElement(
+          'p',
+          '',
+          `高速監視オプション：${highSpeedText}`
+        )
+      );
+
+      const toggleButton =
+        createElement(
+          'button',
+          '',
+          favorite.enabled === true
+            ? '停止'
+            : '再開'
+        );
+
+      toggleButton.type = 'button';
+
+      toggleButton.addEventListener(
+        'click',
+        async () => {
+          toggleButton.disabled = true;
+
+          try {
+            const result =
+              await NotifyApi.favorite.setEnabled(
+                favorite.favoriteId,
+                favorite.enabled !== true
+              );
+
+            if (result?.ok !== true) {
+              throw new Error(
+                result?.code || 'API_ERROR'
+              );
+            }
+
+            // 最新状態をDBから再取得
+            await renderFavorites();
+
+          } catch (error) {
+            toggleButton.disabled = false;
+
+            window.alert(
+              '変更できませんでした。もう一度お試しください。'
+            );
+          }
+        }
+      );
+
+      card.append(toggleButton);
+
+      page.append(card);
+    }
+
+    app.replaceChildren(page);
+
+  } catch (error) {
+    app.replaceChildren(
+      createElement(
+        'p',
+        'error-message',
+        '推し情報を読み込めませんでした'
+      )
+    );
+  }
+}
+
 function renderComingSoon(title) {
   const app = document.getElementById('app');
 
