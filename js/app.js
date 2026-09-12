@@ -2141,6 +2141,9 @@ async function renderFavorites() {
 
       settingsPanel.hidden = true;
 
+      window.alert(
+  result?.message || '通知設定を変更しました'
+);
 
       // 通常情報：21時まとめ
       const dailyRadio =
