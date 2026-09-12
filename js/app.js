@@ -2023,78 +2023,93 @@ async function renderFavorites() {
           ? 'ON'
           : 'OFF';
 
-      const statusText =
-        favorite.enabled === true
+      let currentEnabled =
+  favorite.enabled === true;
+
+const statusElement =
+  createElement(
+    'p',
+    '',
+    currentEnabled
+      ? 'Monitoring中'
+      : '停止中'
+  );
+
+card.append(
+  createElement(
+    'h2',
+    '',
+    favorite.canonicalName ??
+      '名称未取得'
+  ),
+  statusElement,
+  createElement(
+    'p',
+    '',
+    `通常情報：${digestText}`
+  ),
+  createElement(
+    'p',
+    '',
+    `高速監視オプション：${highSpeedText}`
+  )
+);
+
+const toggleButton =
+  createElement(
+    'button',
+    '',
+    currentEnabled
+      ? '停止'
+      : '再開'
+  );
+
+toggleButton.type = 'button';
+
+toggleButton.addEventListener(
+  'click',
+  async () => {
+    toggleButton.disabled = true;
+
+    try {
+      const result =
+        await NotifyApi.favorite.setEnabled(
+          favorite.favoriteId,
+          !currentEnabled
+        );
+
+      if (result?.ok !== true) {
+        throw new Error(
+          result?.code || 'API_ERROR'
+        );
+      }
+
+      currentEnabled =
+        result?.data?.enabled === true;
+
+      statusElement.textContent =
+        currentEnabled
           ? 'Monitoring中'
           : '停止中';
 
-      card.append(
-        createElement(
-          'h2',
-          '',
-          favorite.canonicalName ??
-            '名称未取得'
-        ),
-        createElement(
-          'p',
-          '',
-          statusText
-        ),
-        createElement(
-          'p',
-          '',
-          `通常情報：${digestText}`
-        ),
-        createElement(
-          'p',
-          '',
-          `高速監視オプション：${highSpeedText}`
-        )
+      toggleButton.textContent =
+        currentEnabled
+          ? '停止'
+          : '再開';
+
+      toggleButton.disabled = false;
+
+    } catch (error) {
+      toggleButton.disabled = false;
+
+      window.alert(
+        '変更できませんでした。もう一度お試しください。'
       );
+    }
+  }
+);
 
-      const toggleButton =
-        createElement(
-          'button',
-          '',
-          favorite.enabled === true
-            ? '停止'
-            : '再開'
-        );
-
-      toggleButton.type = 'button';
-
-      toggleButton.addEventListener(
-        'click',
-        async () => {
-          toggleButton.disabled = true;
-
-          try {
-            const result =
-              await NotifyApi.favorite.setEnabled(
-                favorite.favoriteId,
-                favorite.enabled !== true
-              );
-
-            if (result?.ok !== true) {
-              throw new Error(
-                result?.code || 'API_ERROR'
-              );
-            }
-
-            // 最新状態をDBから再取得
-            await renderFavorites();
-
-          } catch (error) {
-            toggleButton.disabled = false;
-
-            window.alert(
-              '変更できませんでした。もう一度お試しください。'
-            );
-          }
-        }
-      );
-
-      card.append(toggleButton);
+card.append(toggleButton);
 
       page.append(card);
     }
