@@ -2318,10 +2318,7 @@ async function renderFavorites() {
               }`;
 
             settingsPanel.hidden = true;
-
-window.alert(
-  result?.message || '通知設定を変更しました'
-);
+            
 
 } catch (error) {
   window.alert(
