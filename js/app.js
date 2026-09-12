@@ -1990,7 +1990,6 @@ async function renderFavorites() {
       )
     );
 
-    // 登録0件
     if (favorites.length === 0) {
       page.append(
         createElement(
@@ -2013,103 +2012,353 @@ async function renderFavorites() {
       const settings =
         favorite?.notificationSettings ?? {};
 
-      const digestText =
-        settings.digestDelivery === 'daily'
-          ? '21時まとめ'
-          : '通知しない';
-
-      const highSpeedText =
-        settings.highSpeedMonitoring === true
-          ? 'ON'
-          : 'OFF';
-
       let currentEnabled =
-  favorite.enabled === true;
+        favorite.enabled === true;
 
-const statusElement =
-  createElement(
-    'p',
-    '',
-    currentEnabled
-      ? 'Monitoring中'
-      : '停止中'
-  );
+      let currentDigestDelivery =
+        settings.digestDelivery === 'off'
+          ? 'off'
+          : 'daily';
 
-card.append(
-  createElement(
-    'h2',
-    '',
-    favorite.canonicalName ??
-      '名称未取得'
-  ),
-  statusElement,
-  createElement(
-    'p',
-    '',
-    `通常情報：${digestText}`
-  ),
-  createElement(
-    'p',
-    '',
-    `高速監視オプション：${highSpeedText}`
-  )
-);
+      let currentHighSpeed =
+        settings.highSpeedMonitoring === true;
 
-const toggleButton =
-  createElement(
-    'button',
-    '',
-    currentEnabled
-      ? '停止'
-      : '再開'
-  );
-
-toggleButton.type = 'button';
-
-toggleButton.addEventListener(
-  'click',
-  async () => {
-    toggleButton.disabled = true;
-
-    try {
-      const result =
-        await NotifyApi.favorite.setEnabled(
-          favorite.favoriteId,
-          !currentEnabled
+      const statusElement =
+        createElement(
+          'p',
+          '',
+          currentEnabled
+            ? 'Monitoring中'
+            : '停止中'
         );
 
-      if (result?.ok !== true) {
-        throw new Error(
-          result?.code || 'API_ERROR'
+      const digestElement =
+        createElement(
+          'p',
+          '',
+          currentDigestDelivery === 'daily'
+            ? '通常情報：21時まとめ'
+            : '通常情報：通知しない'
         );
+
+      const highSpeedElement =
+        createElement(
+          'p',
+          '',
+          `高速監視オプション：${
+            currentHighSpeed
+              ? 'ON'
+              : 'OFF'
+          }`
+        );
+
+      card.append(
+        createElement(
+          'h2',
+          '',
+          favorite.canonicalName ??
+            '名称未取得'
+        ),
+        statusElement,
+        digestElement,
+        highSpeedElement
+      );
+
+
+      // =====================================
+      // 停止 / 再開
+      // =====================================
+
+      const toggleButton =
+        createElement(
+          'button',
+          '',
+          currentEnabled
+            ? '停止'
+            : '再開'
+        );
+
+      toggleButton.type = 'button';
+
+      toggleButton.addEventListener(
+        'click',
+        async () => {
+          toggleButton.disabled = true;
+
+          try {
+            const result =
+              await NotifyApi.favorite.setEnabled(
+                favorite.favoriteId,
+                !currentEnabled
+              );
+
+            if (result?.ok !== true) {
+              throw new Error(
+                result?.code ||
+                'API_ERROR'
+              );
+            }
+
+            currentEnabled =
+              result?.data?.enabled === true;
+
+            statusElement.textContent =
+              currentEnabled
+                ? 'Monitoring中'
+                : '停止中';
+
+            toggleButton.textContent =
+              currentEnabled
+                ? '停止'
+                : '再開';
+
+          } catch (error) {
+            window.alert(
+              '変更できませんでした。もう一度お試しください。'
+            );
+          } finally {
+            toggleButton.disabled = false;
+          }
+        }
+      );
+
+
+      // =====================================
+      // 設定変更
+      // =====================================
+
+      const settingsButton =
+        createElement(
+          'button',
+          '',
+          '設定変更'
+        );
+
+      settingsButton.type = 'button';
+
+      const settingsPanel =
+        document.createElement('div');
+
+      settingsPanel.hidden = true;
+
+
+      // 通常情報：21時まとめ
+      const dailyRadio =
+        document.createElement('input');
+
+      dailyRadio.type = 'radio';
+      dailyRadio.name =
+        `digest-${favorite.favoriteId}`;
+      dailyRadio.value = 'daily';
+
+
+      const dailyLabel =
+        document.createElement('label');
+
+      dailyLabel.append(
+        dailyRadio,
+        document.createTextNode(
+          ' 21時にまとめて通知'
+        )
+      );
+
+
+      // 通常情報：OFF
+      const offRadio =
+        document.createElement('input');
+
+      offRadio.type = 'radio';
+      offRadio.name =
+        `digest-${favorite.favoriteId}`;
+      offRadio.value = 'off';
+
+
+      const offLabel =
+        document.createElement('label');
+
+      offLabel.append(
+        offRadio,
+        document.createTextNode(
+          ' 通知しない'
+        )
+      );
+
+
+      // 高速監視オプション
+      const highSpeedCheckbox =
+        document.createElement('input');
+
+      highSpeedCheckbox.type = 'checkbox';
+
+
+      const highSpeedLabel =
+        document.createElement('label');
+
+      highSpeedLabel.append(
+        highSpeedCheckbox,
+        document.createTextNode(
+          ' 高速監視オプションを利用する'
+        )
+      );
+
+
+      const saveButton =
+        createElement(
+          'button',
+          '',
+          '保存'
+        );
+
+      saveButton.type = 'button';
+
+
+      const cancelButton =
+        createElement(
+          'button',
+          '',
+          'キャンセル'
+        );
+
+      cancelButton.type = 'button';
+
+
+      function resetSettingsForm() {
+        dailyRadio.checked =
+          currentDigestDelivery === 'daily';
+
+        offRadio.checked =
+          currentDigestDelivery === 'off';
+
+        highSpeedCheckbox.checked =
+          currentHighSpeed;
       }
 
-      currentEnabled =
-        result?.data?.enabled === true;
 
-      statusElement.textContent =
-        currentEnabled
-          ? 'Monitoring中'
-          : '停止中';
-
-      toggleButton.textContent =
-        currentEnabled
-          ? '停止'
-          : '再開';
-
-      toggleButton.disabled = false;
-
-    } catch (error) {
-      toggleButton.disabled = false;
-
-      window.alert(
-        '変更できませんでした。もう一度お試しください。'
+      settingsButton.addEventListener(
+        'click',
+        () => {
+          resetSettingsForm();
+          settingsPanel.hidden = false;
+        }
       );
-    }
-  }
-);
 
-card.append(toggleButton);
+
+      cancelButton.addEventListener(
+        'click',
+        () => {
+          resetSettingsForm();
+          settingsPanel.hidden = true;
+        }
+      );
+
+
+      saveButton.addEventListener(
+        'click',
+        async () => {
+          saveButton.disabled = true;
+          cancelButton.disabled = true;
+
+          try {
+            const nextDigestDelivery =
+              dailyRadio.checked
+                ? 'daily'
+                : 'off';
+
+            const nextSettings = {
+              schemaVersion: 2,
+              priorityDelivery: 'immediate',
+
+              digestDelivery:
+                nextDigestDelivery,
+
+              digestTime:
+                nextDigestDelivery === 'daily'
+                  ? '21:00'
+                  : null,
+
+              highSpeedMonitoring:
+                highSpeedCheckbox.checked
+            };
+
+            const result =
+              await NotifyApi.favorite.updateSettings(
+                favorite.favoriteId,
+                nextSettings
+              );
+
+            if (result?.ok !== true) {
+              throw new Error(
+                result?.code ||
+                'API_ERROR'
+              );
+            }
+
+            const saved =
+              result?.data
+                ?.notificationSettings ??
+              nextSettings;
+
+            currentDigestDelivery =
+              saved.digestDelivery === 'off'
+                ? 'off'
+                : 'daily';
+
+            currentHighSpeed =
+              saved.highSpeedMonitoring === true;
+
+            digestElement.textContent =
+              currentDigestDelivery === 'daily'
+                ? '通常情報：21時まとめ'
+                : '通常情報：通知しない';
+
+            highSpeedElement.textContent =
+              `高速監視オプション：${
+                currentHighSpeed
+                  ? 'ON'
+                  : 'OFF'
+              }`;
+
+            settingsPanel.hidden = true;
+
+          } catch (error) {
+            window.alert(
+              '通知設定を変更できませんでした。もう一度お試しください。'
+            );
+          } finally {
+            saveButton.disabled = false;
+            cancelButton.disabled = false;
+          }
+        }
+      );
+
+
+      settingsPanel.append(
+        createElement(
+          'p',
+          '',
+          '通常情報'
+        ),
+        dailyLabel,
+        document.createElement('br'),
+        offLabel,
+        document.createElement('br'),
+        createElement(
+          'p',
+          '',
+          '高速監視オプション'
+        ),
+        highSpeedLabel,
+        document.createElement('br'),
+        saveButton,
+        cancelButton
+      );
+
+
+      card.append(
+        settingsButton,
+        toggleButton,
+        settingsPanel
+      );
 
       page.append(card);
     }
@@ -2126,91 +2375,3 @@ card.append(toggleButton);
     );
   }
 }
-
-function renderComingSoon(title) {
-  const app = document.getElementById('app');
-
-  const page = createElement(
-    'main',
-    'page'
-  );
-
-  page.append(
-    createElement(
-      'h1',
-      'logo',
-      'Notify'
-    ),
-    createElement(
-      'h2',
-      'page-title',
-      title
-    ),
-    createElement(
-      'p',
-      'empty-message',
-      '準備中です'
-    )
-  );
-
-  app.replaceChildren(page);
-}
-
-function renderRoute() {
-  const route =
-    location.hash || '#/home';
-
-  updateActiveNav();
-
-  switch (route) {
-    case '#/start':
-      renderStart();
-      break;
-  
-    case '#/home':
-      renderHome();
-      break;
-
-    case '#/register':
-      renderRegister();
-      break;
-
-    case '#/favorites':
-      renderFavorites();
-      break;
-
-    case '#/plan':
-      renderPlan();
-      break;
-
-    default:
-      location.hash = '#/home';
-  }
-}
-
-async function startApp() {
-  const app =
-    document.getElementById('app');
-
-  try {
-    await NotifyAuth.init();
-
-    window.addEventListener(
-      'hashchange',
-      renderRoute
-    );
-
-    renderRoute();
-
-  } catch (error) {
-    app.replaceChildren(
-      createElement(
-        'p',
-        'error-message',
-        'Notifyを開始できませんでした'
-      )
-    );
-  }
-}
-
-startApp();
