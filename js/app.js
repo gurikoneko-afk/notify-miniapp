@@ -2161,7 +2161,7 @@ function renderRoute() {
       break;
 
     case '#/favorites':
-      renderComingSoon('推し管理');
+      renderFavorites();
       break;
 
     case '#/plan':
