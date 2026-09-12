@@ -2252,84 +2252,87 @@ async function renderFavorites() {
 
 
       saveButton.addEventListener(
-        'click',
-        async () => {
-          saveButton.disabled = true;
-          cancelButton.disabled = true;
+  'click',
+  async () => {
+    saveButton.disabled = true;
+    cancelButton.disabled = true;
 
-          try {
-            const nextDigestDelivery =
-              dailyRadio.checked
-                ? 'daily'
-                : 'off';
+    try {
+      const nextDigestDelivery =
+        dailyRadio.checked
+          ? 'daily'
+          : 'off';
 
-            const nextSettings = {
-              schemaVersion: 2,
-              priorityDelivery: 'immediate',
+      const nextSettings = {
+        schemaVersion: 2,
+        priorityDelivery: 'immediate',
 
-              digestDelivery:
-                nextDigestDelivery,
+        digestDelivery:
+          nextDigestDelivery,
 
-              digestTime:
-                nextDigestDelivery === 'daily'
-                  ? '21:00'
-                  : null,
+        digestTime:
+          nextDigestDelivery === 'daily'
+            ? '21:00'
+            : null,
 
-              highSpeedMonitoring:
-                highSpeedCheckbox.checked
-            };
+        highSpeedMonitoring:
+          highSpeedCheckbox.checked
+      };
 
-            const result =
-              await NotifyApi.favorite.updateSettings(
-                favorite.favoriteId,
-                nextSettings
-              );
+      const result =
+        await NotifyApi.favorite.updateSettings(
+          favorite.favoriteId,
+          nextSettings
+        );
 
-            if (result?.ok !== true) {
-              throw new Error(
-                result?.code ||
-                'API_ERROR'
-              );
-            }
+      if (result?.ok !== true) {
+        throw new Error(
+          result?.code || 'API_ERROR'
+        );
+      }
 
-            const saved =
-              result?.data
-                ?.notificationSettings ??
-              nextSettings;
+      const saved =
+        result?.data?.notificationSettings ??
+        nextSettings;
 
-            currentDigestDelivery =
-              saved.digestDelivery === 'off'
-                ? 'off'
-                : 'daily';
+      currentDigestDelivery =
+        saved.digestDelivery === 'off'
+          ? 'off'
+          : 'daily';
 
-            currentHighSpeed =
-              saved.highSpeedMonitoring === true;
+      currentHighSpeed =
+        saved.highSpeedMonitoring === true;
 
-            digestElement.textContent =
-              currentDigestDelivery === 'daily'
-                ? '通常情報：21時まとめ'
-                : '通常情報：通知しない';
+      digestElement.textContent =
+        currentDigestDelivery === 'daily'
+          ? '通常情報：21時まとめ'
+          : '通常情報：通知しない';
 
-            highSpeedElement.textContent =
-              `高速監視オプション：${
-                currentHighSpeed
-                  ? 'ON'
-                  : 'OFF'
-              }`;
+      highSpeedElement.textContent =
+        `高速監視オプション：${
+          currentHighSpeed
+            ? 'ON'
+            : 'OFF'
+        }`;
 
-            settingsPanel.hidden = true;
-            
+      settingsPanel.hidden = true;
 
-} catch (error) {
-  window.alert(
-    '通知設定を変更できませんでした。もう一度お試しください。'
-  );
-
-} finally {
-  saveButton.disabled = false;
-  cancelButton.disabled = false;
-}
+      window.alert(
+        result?.message ||
+        '通知設定を変更しました'
       );
+
+    } catch (error) {
+      window.alert(
+        '通知設定を変更できませんでした。もう一度お試しください。'
+      );
+
+    } finally {
+      saveButton.disabled = false;
+      cancelButton.disabled = false;
+    }
+  }
+);
 
 
       settingsPanel.append(
