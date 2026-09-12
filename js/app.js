@@ -2375,3 +2375,90 @@ async function renderFavorites() {
     );
   }
 }
+function renderComingSoon(title) {
+  const app = document.getElementById('app');
+
+  const page = createElement(
+    'main',
+    'page'
+  );
+
+  page.append(
+    createElement(
+      'h1',
+      'logo',
+      'Notify'
+    ),
+    createElement(
+      'h2',
+      'page-title',
+      title
+    ),
+    createElement(
+      'p',
+      'empty-message',
+      '準備中です'
+    )
+  );
+
+  app.replaceChildren(page);
+}
+
+function renderRoute() {
+  const route =
+    location.hash || '#/home';
+
+  updateActiveNav();
+
+  switch (route) {
+    case '#/start':
+      renderStart();
+      break;
+
+    case '#/home':
+      renderHome();
+      break;
+
+    case '#/register':
+      renderRegister();
+      break;
+
+    case '#/favorites':
+      renderFavorites();
+      break;
+
+    case '#/plan':
+      renderPlan();
+      break;
+
+    default:
+      location.hash = '#/home';
+  }
+}
+
+async function startApp() {
+  const app =
+    document.getElementById('app');
+
+  try {
+    await NotifyAuth.init();
+
+    window.addEventListener(
+      'hashchange',
+      renderRoute
+    );
+
+    renderRoute();
+
+  } catch (error) {
+    app.replaceChildren(
+      createElement(
+        'p',
+        'error-message',
+        'Notifyを開始できませんでした'
+      )
+    );
+  }
+}
+
+startApp();
