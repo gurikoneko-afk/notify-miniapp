@@ -58,6 +58,19 @@ favorite: {
       }
     );
   },
+
+  updateSettings(
+    favoriteId,
+    notificationSettings
+  ) {
+    return callNotifyApi(
+      'favorite.settings.update',
+      {
+        favoriteId,
+        notificationSettings
+      }
+    );
+  },
 },
   
   plan: {
