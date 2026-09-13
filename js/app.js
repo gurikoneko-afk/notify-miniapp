@@ -394,6 +394,9 @@ function renderRegister() {
     '分かる範囲でOKです。2〜3個あると見つけやすくなります'
   );
 
+  nameField.wrapper.hidden = true;
+hintMessage.hidden = true;
+
   // -------------------------
   // 人
   // -------------------------
@@ -528,15 +531,25 @@ function renderRegister() {
     });
 
   categorySelect.addEventListener(
-    'change',
-    () => {
-      Object.entries(categorySections)
-        .forEach(([category, section]) => {
-          section.hidden =
-            category !== categorySelect.value;
-        });
-    }
-  );
+  'change',
+  () => {
+    const hasCategory =
+      Boolean(categorySelect.value);
+
+    nameField.wrapper.hidden =
+      !hasCategory;
+
+    hintMessage.hidden =
+      !hasCategory;
+
+    Object.entries(categorySections)
+      .forEach(([category, section]) => {
+        section.hidden =
+          !hasCategory ||
+          category !== categorySelect.value;
+      });
+  }
+);
 
   // -------------------------
   // 共通補足
@@ -1445,8 +1458,8 @@ digestRow.append(
   );
 
   formCard.append(
-    nameField.wrapper,
     categoryWrapper,
+    nameField.wrapper,
     hintMessage,
 
     personSection,
