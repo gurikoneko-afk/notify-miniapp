@@ -2379,10 +2379,11 @@ settingsMessage.hidden = false;
 
 
       card.append(
-        settingsButton,
-        toggleButton,
-        settingsPanel
-      );
+  settingsButton,
+  toggleButton,
+  settingsPanel,
+  settingsMessage
+);
 
       page.append(card);
     }
