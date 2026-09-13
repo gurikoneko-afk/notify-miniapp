@@ -2131,6 +2131,125 @@ settingsMessage.hidden = false;
       // 設定変更
       // =====================================
 
+      // =====================================
+　　　　// 削除
+　　　　// =====================================
+
+const deleteButton =
+  createElement(
+    'button',
+    '',
+    '削除'
+  );
+
+deleteButton.type = 'button';
+
+const deleteConfirm =
+  document.createElement('div');
+
+deleteConfirm.hidden = true;
+
+const deleteMessage =
+  createElement(
+    'p',
+    'error-message',
+    ''
+  );
+
+deleteMessage.hidden = true;
+
+deleteConfirm.append(
+  createElement(
+    'p',
+    '',
+    'この推しを削除しますか？'
+  )
+);
+
+const confirmDeleteButton =
+  createElement(
+    'button',
+    '',
+    '削除する'
+  );
+
+confirmDeleteButton.type = 'button';
+
+const cancelDeleteButton =
+  createElement(
+    'button',
+    '',
+    'キャンセル'
+  );
+
+cancelDeleteButton.type = 'button';
+
+deleteConfirm.append(
+  confirmDeleteButton,
+  cancelDeleteButton,
+  deleteMessage
+);
+
+deleteButton.addEventListener(
+  'click',
+  () => {
+    deleteMessage.hidden = true;
+    deleteConfirm.hidden = false;
+  }
+);
+
+cancelDeleteButton.addEventListener(
+  'click',
+  () => {
+    deleteConfirm.hidden = true;
+  }
+);
+
+confirmDeleteButton.addEventListener(
+  'click',
+  async () => {
+    confirmDeleteButton.disabled = true;
+    cancelDeleteButton.disabled = true;
+    deleteMessage.hidden = true;
+
+    try {
+      const result =
+        await NotifyApi.favorite.deleteFavorite(
+          favorite.favoriteId
+        );
+
+      if (result?.ok !== true) {
+        throw new Error(
+          result?.code || 'API_ERROR'
+        );
+      }
+
+      card.remove();
+
+      if (
+        page.querySelectorAll('.card').length === 0
+      ) {
+        page.append(
+          createElement(
+            'p',
+            'empty-message',
+            '登録中の推しはいません'
+          )
+        );
+      }
+
+    } catch (error) {
+      deleteMessage.textContent =
+        '削除できませんでした。もう一度お試しください。';
+
+      deleteMessage.hidden = false;
+
+      confirmDeleteButton.disabled = false;
+      cancelDeleteButton.disabled = false;
+    }
+  }
+);
+
       const settingsButton =
         createElement(
           'button',
