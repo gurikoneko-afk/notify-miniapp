@@ -795,7 +795,10 @@ if (category === 'creator') {
 
     return hints;
   }
-function showRegisterStep2(resolveData) {
+function showRegisterStep2(
+  resolveData,
+  selectedCategory
+) {
   resultArea.replaceChildren();
 
   const draftId = resolveData?.draftId;
@@ -1403,7 +1406,10 @@ digestRow.append(
       );
 
       if (response.ok === true) {
-  showRegisterStep2(response.data);
+  showRegisterStep2(
+    response.data,
+    selectedCategory
+  );
   return;
 }
 
