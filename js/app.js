@@ -1445,6 +1445,116 @@ digestRow.append(
       }
 
       if (
+  response.code ===
+  'TYPE_MISMATCH'
+) {
+  const resolvedType =
+    response.data?.resolvedTargetType;
+
+  const resolvedName =
+    response.data?.resolvedCanonicalName;
+
+  const typeLabels = {
+    person: '人',
+    group: 'グループ',
+    character: 'キャラクター',
+    brand: 'ブランド',
+    creator: 'クリエイター・活動名義',
+    work: '作品',
+  };
+
+  const resolvedTypeLabel =
+    typeLabels[resolvedType] ??
+    resolvedType ??
+    '別の種類';
+
+  const mismatchCard =
+    createElement(
+      'div',
+      'card'
+    );
+
+  mismatchCard.append(
+    createElement(
+      'p',
+      'favorite-name',
+      resolvedName
+        ? `${resolvedName} を確認しました`
+        : '推しを確認しました'
+    ),
+    createElement(
+      'p',
+      'empty-message',
+      `${resolvedTypeLabel}として確認できました。`
+    )
+  );
+
+  const continueButton =
+    createElement(
+      'button',
+      '',
+      `${resolvedTypeLabel}として続ける`
+    );
+
+  continueButton.type = 'button';
+
+  const retryButton =
+    createElement(
+      'button',
+      '',
+      '種類を選び直す'
+    );
+
+  retryButton.type = 'button';
+
+  continueButton.addEventListener(
+    'click',
+    async () => {
+      if (!resolvedType) {
+        return;
+      }
+
+      categorySelect.value =
+        resolvedType;
+
+      categorySelect.dispatchEvent(
+        new Event('change')
+      );
+
+      resultArea.innerHTML = '';
+
+      await resolveFavorite();
+    }
+  );
+
+  retryButton.addEventListener(
+    'click',
+    () => {
+      resultArea.innerHTML = '';
+
+      categorySelect.value = '';
+
+      categorySelect.dispatchEvent(
+        new Event('change')
+      );
+
+      categorySelect.focus();
+    }
+  );
+
+  mismatchCard.append(
+    continueButton,
+    retryButton
+  );
+
+  resultArea.append(
+    mismatchCard
+  );
+
+  return;
+}
+
+      if (
         response.code ===
         'NEED_MORE_INFO'
       ) {
