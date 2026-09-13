@@ -2500,8 +2500,10 @@ settingsMessage.hidden = false;
       card.append(
   settingsButton,
   toggleButton,
+  deleteButton,
   settingsPanel,
-  settingsMessage
+  settingsMessage,
+  deleteConfirm
 );
 
       page.append(card);
