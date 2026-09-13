@@ -362,12 +362,14 @@ function renderRegister() {
   );
 
   const categoryOptions = [
-    ['', '選んでください'],
-    ['person', '人'],
-    ['group', 'グループ'],
-    ['character', 'キャラクター'],
-    ['work', '作品（アニメ・漫画・ゲームなど）'],
-  ];
+  ['', '選んでください'],
+  ['person', '人'],
+  ['group', 'グループ'],
+  ['character', 'キャラクター'],
+  ['brand', 'ブランド'],
+  ['creator', 'クリエイター・活動名義'],
+  ['work', '作品（アニメ・漫画・ゲームなど）'],
+];
 
   categoryOptions.forEach(
     ([value, text]) => {
