@@ -759,6 +759,30 @@ officialUrl.field.spellcheck = false;
       );
     }
 
+    if (category === 'brand') {
+  add(
+    'company',
+    valueOf(brandCompany.field)
+  );
+
+  add(
+    'field',
+    valueOf(brandField.field)
+  );
+}
+
+if (category === 'creator') {
+  add(
+    'platform',
+    valueOf(creatorPlatform.field)
+  );
+
+  add(
+    'affiliation',
+    valueOf(creatorAffiliation.field)
+  );
+}
+
     add(
       'officialUrl',
       valueOf(officialUrl.field)
