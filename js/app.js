@@ -2340,9 +2340,13 @@ settingsMessage.textContent =
 settingsMessage.hidden = false;
 
     } catch (error) {
-      window.alert(
-        '通知設定を変更できませんでした。もう一度お試しください。'
-      );
+      settingsMessage.className =
+  'error-message';
+
+settingsMessage.textContent =
+  '通知設定を変更できませんでした。もう一度お試しください。';
+
+settingsMessage.hidden = false;
 
     } finally {
       saveButton.disabled = false;
