@@ -80,6 +80,8 @@ deleteFavorite(favoriteId) {
     }
   );
 },
+
+},
   
   plan: {
     get() {
