@@ -60,17 +60,25 @@ favorite: {
   },
 
   updateSettings(
-    favoriteId,
-    notificationSettings
-  ) {
-    return callNotifyApi(
-      'favorite.settings.update',
-      {
-        favoriteId,
-        notificationSettings
-      }
-    );
-  },
+  favoriteId,
+  notificationSettings
+) {
+  return callNotifyApi(
+    'favorite.settings.update',
+    {
+      favoriteId,
+      notificationSettings
+    }
+  );
+},
+
+deleteFavorite(favoriteId) {
+  return callNotifyApi(
+    'favorite.delete',
+    {
+      favoriteId
+    }
+  );
 },
   
   plan: {
