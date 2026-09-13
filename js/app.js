@@ -2113,9 +2113,13 @@ async function renderFavorites() {
                 : '再開';
 
           } catch (error) {
-            window.alert(
-              '変更できませんでした。もう一度お試しください。'
-            );
+            settingsMessage.className =
+  'error-message';
+
+settingsMessage.textContent =
+  '通知設定を変更できませんでした。もう一度お試しください。';
+
+settingsMessage.hidden = false;
           } finally {
             toggleButton.disabled = false;
           }
@@ -2140,7 +2144,16 @@ async function renderFavorites() {
         document.createElement('div');
 
       settingsPanel.hidden = true;
+      
+　　　　const settingsMessage =
+  createElement(
+    'p',
+    'empty-message',
+    ''
+  );
 
+settingsMessage.hidden = true;
+      
       // 通常情報：21時まとめ
       const dailyRadio =
         document.createElement('input');
@@ -2317,10 +2330,14 @@ async function renderFavorites() {
 
       settingsPanel.hidden = true;
 
-      window.alert(
-        result?.message ||
-        '通知設定を変更しました'
-      );
+      settingsMessage.className =
+  'empty-message';
+
+settingsMessage.textContent =
+  result?.message ||
+  '通知設定を変更しました';
+
+settingsMessage.hidden = false;
 
     } catch (error) {
       window.alert(
