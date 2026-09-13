@@ -491,6 +491,54 @@ hintMessage.hidden = true;
   );
 
   // -------------------------
+// ブランド
+// -------------------------
+
+const brandSection = createElement(
+  'div',
+  'category-fields'
+);
+
+const brandCompany = createField(
+  '運営会社・メーカー',
+  '例：株式会社○○'
+);
+
+const brandField = createField(
+  '商品・サービス分野',
+  '例：キャラクターグッズ'
+);
+
+brandSection.append(
+  brandCompany.wrapper,
+  brandField.wrapper
+);
+
+// -------------------------
+// クリエイター・活動名義
+// -------------------------
+
+const creatorSection = createElement(
+  'div',
+  'category-fields'
+);
+
+const creatorPlatform = createField(
+  '主な活動場所',
+  '例：YouTube / TikTok'
+);
+
+const creatorAffiliation = createField(
+  '所属・事務所',
+  '例：○○事務所'
+);
+
+creatorSection.append(
+  creatorPlatform.wrapper,
+  creatorAffiliation.wrapper
+);
+
+  // -------------------------
   // 作品
   // -------------------------
 
@@ -521,11 +569,13 @@ hintMessage.hidden = true;
   );
 
   const categorySections = {
-    person: personSection,
-    group: groupSection,
-    character: characterSection,
-    work: workSection,
-  };
+  person: personSection,
+  group: groupSection,
+  character: characterSection,
+  brand: brandSection,
+  creator: creatorSection,
+  work: workSection,
+};
 
   Object.values(categorySections)
     .forEach(section => {
@@ -1465,9 +1515,11 @@ digestRow.append(
     hintMessage,
 
     personSection,
-    groupSection,
-    characterSection,
-    workSection,
+groupSection,
+characterSection,
+brandSection,
+creatorSection,
+workSection,
 
     commonTitle,
     officialUrl.wrapper,
