@@ -1045,6 +1045,15 @@ digestRow.append(
 
   registerButton.type = 'button';
 
+const cancelButton =
+  createElement(
+    'button',
+    'secondary-action',
+    'キャンセル'
+  );
+
+cancelButton.type = 'button';
+  
   // -------------------------
   // 登録実行
   // -------------------------
@@ -1305,10 +1314,52 @@ digestRow.append(
     }
   );
 
+cancelButton.addEventListener(
+  'click',
+  async () => {
+    registerMessage.hidden = true;
+    registerMessage.textContent = '';
+
+    cancelButton.disabled = true;
+    registerButton.disabled = true;
+    highSpeedToggle.disabled = true;
+
+    try {
+      const response =
+        await NotifyApi.favorite.cancelDraft(
+          draftId
+        );
+
+      if (response?.ok !== true) {
+        throw new Error(
+          response?.code || 'API_ERROR'
+        );
+      }
+
+      renderRegister();
+      return;
+
+    } catch (error) {
+      registerMessage.textContent =
+        'キャンセルできませんでした。もう一度お試しください';
+
+      registerMessage.hidden = false;
+
+      cancelButton.disabled = false;
+      registerButton.disabled = false;
+
+      if (highSpeedAvailable) {
+        highSpeedToggle.disabled = false;
+      }
+    }
+  }
+);
+  
   card.append(
-    registerMessage,
-    registerButton
-  );
+  registerMessage,
+  registerButton,
+  cancelButton
+);
 
   resultArea.append(card);
 
