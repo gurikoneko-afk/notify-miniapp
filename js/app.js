@@ -1552,8 +1552,9 @@ digestRow.append(
 
   formCard.append(
     categoryWrapper,
-    nameField.wrapper,
-    hintMessage,
+categoryNotice,
+nameField.wrapper,
+hintMessage,
 
     personSection,
 groupSection,
