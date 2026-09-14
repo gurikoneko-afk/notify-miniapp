@@ -298,3 +298,10 @@ a {
   color: inherit;
   font-size: 13px;
 }
+
+.register-label-primary {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
