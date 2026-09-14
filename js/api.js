@@ -81,6 +81,15 @@ deleteFavorite(favoriteId) {
   );
 },
 
+cancelDraft(draftId) {
+  return callNotifyApi(
+    'favorite.draft.cancel',
+    {
+      draftId
+    }
+  );
+},
+
 },
   
   plan: {
