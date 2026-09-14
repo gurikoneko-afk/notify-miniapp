@@ -352,7 +352,7 @@ function renderRegister() {
 
   const categoryLabel = createElement(
     'label',
-    'register-label',
+    'register-label register-label-primary',
     '種類 *'
   );
 
@@ -390,6 +390,12 @@ function renderRegister() {
     categorySelect
   );
 
+  const categoryNotice = createElement(
+  'p',
+  'empty-message',
+  '種類は推し検索時のヒントです。正確な選択が推し発見の助けになっております。'
+);
+  
   const hintMessage = createElement(
     'p',
     'empty-message',
