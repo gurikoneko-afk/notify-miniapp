@@ -1449,11 +1449,6 @@ digestRow.append(
 
         return;
       }
-
-      if (
-  response.code ===
-  'TYPE_MISMATCH'
-) {
         
       if (
         response.code ===
