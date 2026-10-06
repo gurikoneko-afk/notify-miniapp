@@ -90,6 +90,63 @@ async function loadPrecontractCandidate() {
   return candidate;
 }
 
+function createPrecontractCandidateCard(candidate, onCancelled) {
+  const card = createElement('div', 'card precontract-card');
+  const cancelButton = createElement('button', 'secondary-action', 'この候補をやめる');
+  cancelButton.type = 'button';
+  const message = createElement('p', 'error-message');
+  message.hidden = true;
+  let cancelling = false;
+
+  cancelButton.addEventListener('click', async () => {
+    if (cancelling || !card.isConnected) return;
+    if (!window.confirm('この候補をやめますか？')) return;
+    cancelling = true;
+    cancelButton.disabled = true;
+    message.hidden = true;
+
+    try {
+      const response = await NotifyApi.call('precontract.cancel', {
+        draftId: candidate.draftId,
+      });
+
+      if (!card.isConnected) return;
+
+      if (response?.ok === true && response.code === 'OK') {
+        onCancelled();
+      } else {
+        message.textContent = response?.code === 'NOT_FOUND'
+          ? '候補が見つかりません' : '候補を削除できませんでした';
+        message.hidden = false;
+      }
+    } catch {
+      if (card.isConnected) {
+        message.textContent = '候補を削除できませんでした';
+        message.hidden = false;
+      }
+    } finally {
+      cancelling = false;
+      cancelButton.disabled = false;
+    }
+  });
+
+  const description = createElement('p', 'empty-message');
+  description.append(
+    document.createTextNode('この推しで利用できるか確認して'),
+    createElement('br'),
+    document.createTextNode('プランを選べます。')
+  );
+  card.append(
+    createElement('h2', 'section-title', '契約前の推し候補'),
+    createElement('p', 'favorite-name', candidate.name),
+    description,
+    createLink('#/plan', 'primary-action', 'プランを見る'),
+    cancelButton,
+    message
+  );
+  return card;
+}
+
 async function renderPrecontractCandidate(section, initialRequest) {
   try {
     const candidate = await (
@@ -106,52 +163,10 @@ async function renderPrecontractCandidate(section, initialRequest) {
     }
     section.hidden = false;
 
-    const card = createElement('div', 'card');
-    const cancelButton = createElement('button', 'secondary-action', 'この候補をやめる');
-    cancelButton.type = 'button';
-    const message = createElement('p', 'error-message');
-    message.hidden = true;
-    let cancelling = false;
-
-    cancelButton.addEventListener('click', async () => {
-      if (cancelling || !section.isConnected) return;
-      cancelling = true;
-      cancelButton.disabled = true;
-      message.hidden = true;
-
-      try {
-        const response = await NotifyApi.call('precontract.cancel', {
-          draftId: candidate.draftId,
-        });
-
-        if (!section.isConnected) return;
-
-        if (response?.ok === true && response.code === 'OK') {
-          section.replaceChildren();
-          section.hidden = true;
-        } else {
-          message.textContent = response?.code === 'NOT_FOUND'
-            ? '候補が見つかりません' : '候補を削除できませんでした';
-          message.hidden = false;
-        }
-      } catch {
-        if (section.isConnected) {
-          message.textContent = '候補を削除できませんでした';
-          message.hidden = false;
-        }
-      } finally {
-        cancelling = false;
-        cancelButton.disabled = false;
-      }
-    });
-
-    card.append(
-      createElement('p', 'favorite-name', `現在の候補：${candidate.name}`),
-      createLink('#/plan', 'primary-action', 'プランを見る'),
-      cancelButton,
-      message
-    );
-    section.append(card);
+    section.append(createPrecontractCandidateCard(candidate, () => {
+      section.replaceChildren();
+      section.hidden = true;
+    }));
   } catch {
     if (section.isConnected) {
       section.hidden = false;
@@ -1562,23 +1577,13 @@ cancelButton.addEventListener(
 
       if (response.ok === true) {
         if (response.data?.requiresPurchase === true) {
-          const candidateCard = createElement('div', 'card');
-          candidateCard.append(
-            createElement('p', 'empty-message', '推し候補を確認できました'),
-            createElement(
-              'p',
-              'favorite-name',
-              response.data.target?.name ?? '名称未取得'
-            ),
-            createElement(
-              'p',
-              'empty-message',
-              'プランを選んで、登録へ進んでください'
-            ),
-            createLink('#/plan', 'primary-action', 'プランを見る')
-          );
+          const candidateCard = createPrecontractCandidateCard({
+            draftId: response.data.draftId,
+            name: response.data.target?.name ?? '名称未取得',
+          }, () => renderRegister());
           resultArea.append(candidateCard);
           button.hidden = true;
+          candidateCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
           return;
         }
 
