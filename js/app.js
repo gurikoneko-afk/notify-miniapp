@@ -1463,12 +1463,30 @@ cancelButton.addEventListener(
       );
 
       if (response.ok === true) {
-  showRegisterStep2(
-    response.data,
-    selectedCategory
-  );
-  return;
-}
+        if (response.data?.requiresPurchase === true) {
+          const candidateCard = createElement('div', 'card');
+          candidateCard.append(
+            createElement('p', 'empty-message', '推し候補を確認できました'),
+            createElement(
+              'p',
+              'favorite-name',
+              response.data.target?.name ?? '名称未取得'
+            ),
+            createElement(
+              'p',
+              'empty-message',
+              'プランを選んで、登録へ進んでください'
+            ),
+            createLink('#/plan', 'primary-action', 'プランを見る')
+          );
+          resultArea.append(candidateCard);
+          button.hidden = true;
+          return;
+        }
+
+        showRegisterStep2(response.data, selectedCategory);
+        return;
+      }
 
       if (
         response.code ===
