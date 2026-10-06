@@ -69,7 +69,100 @@ function createFavoriteRow(favorite) {
   return row;
 }
 
-async function renderHome() {
+async function loadPrecontractCandidate() {
+  const response = await NotifyApi.call('precontract.get');
+
+  if (response?.ok !== true || response.code !== 'OK' ||
+      !response.data || !Object.prototype.hasOwnProperty.call(response.data, 'candidate')) {
+    throw new Error('PRECONTRACT_READ_FAILED');
+  }
+
+  const candidate = response.data.candidate;
+
+  if (candidate === null) return null;
+
+  if (!candidate || typeof candidate.draftId !== 'string' || !candidate.draftId ||
+      typeof candidate.targetId !== 'string' || !candidate.targetId ||
+      typeof candidate.name !== 'string' || !candidate.name.trim()) {
+    throw new Error('INVALID_PRECONTRACT_CANDIDATE');
+  }
+
+  return candidate;
+}
+
+async function renderPrecontractCandidate(section, initialRequest) {
+  try {
+    const candidate = await (
+      initialRequest && typeof initialRequest.then === 'function'
+        ? initialRequest : loadPrecontractCandidate()
+    );
+
+    // A response for a previous home screen must not update another screen.
+    if (!section.isConnected) return;
+    section.replaceChildren();
+    if (candidate === null) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+
+    const card = createElement('div', 'card');
+    const cancelButton = createElement('button', 'secondary-action', 'この候補をやめる');
+    cancelButton.type = 'button';
+    const message = createElement('p', 'error-message');
+    message.hidden = true;
+    let cancelling = false;
+
+    cancelButton.addEventListener('click', async () => {
+      if (cancelling || !section.isConnected) return;
+      cancelling = true;
+      cancelButton.disabled = true;
+      message.hidden = true;
+
+      try {
+        const response = await NotifyApi.call('precontract.cancel', {
+          draftId: candidate.draftId,
+        });
+
+        if (!section.isConnected) return;
+
+        if (response?.ok === true && response.code === 'OK') {
+          section.replaceChildren();
+          section.hidden = true;
+        } else {
+          message.textContent = response?.code === 'NOT_FOUND'
+            ? '候補が見つかりません' : '候補を削除できませんでした';
+          message.hidden = false;
+        }
+      } catch {
+        if (section.isConnected) {
+          message.textContent = '候補を削除できませんでした';
+          message.hidden = false;
+        }
+      } finally {
+        cancelling = false;
+        cancelButton.disabled = false;
+      }
+    });
+
+    card.append(
+      createElement('p', 'favorite-name', `現在の候補：${candidate.name}`),
+      createLink('#/plan', 'primary-action', 'プランを見る'),
+      cancelButton,
+      message
+    );
+    section.append(card);
+  } catch {
+    if (section.isConnected) {
+      section.hidden = false;
+      section.replaceChildren(
+        createElement('p', 'error-message', '契約前候補を確認できませんでした')
+      );
+    }
+  }
+}
+
+async function renderHome(initialCandidateRequest) {
   const app = document.getElementById('app');
 
   app.replaceChildren(
@@ -168,6 +261,10 @@ async function renderHome() {
 
     page.append(usageCard);
 
+    const precontractSection = createElement('section', 'precontract-section');
+    precontractSection.hidden = true;
+    page.append(precontractSection);
+
     page.append(
       createLink(
         '#/register',
@@ -238,6 +335,7 @@ async function renderHome() {
     );
 
     app.replaceChildren(page);
+    await renderPrecontractCandidate(precontractSection, initialCandidateRequest);
 
   } catch (error) {
     const page = createElement(
@@ -2723,7 +2821,7 @@ function renderComingSoon(title) {
   app.replaceChildren(page);
 }
 
-function renderRoute() {
+function renderRoute(initialCandidateRequest) {
   const route =
     location.hash || '#/home';
 
@@ -2735,7 +2833,7 @@ function renderRoute() {
       break;
 
     case '#/home':
-      renderHome();
+      renderHome(initialCandidateRequest);
       break;
 
     case '#/register':
@@ -2762,12 +2860,16 @@ async function startApp() {
   try {
     await NotifyAuth.init();
 
+    // Read once on startup; the home screen reuses this request if it is first.
+    const initialCandidateRequest = loadPrecontractCandidate();
+    initialCandidateRequest.catch(() => {});
+
     window.addEventListener(
       'hashchange',
       renderRoute
     );
 
-    renderRoute();
+    renderRoute(initialCandidateRequest);
 
   } catch (error) {
     app.replaceChildren(
