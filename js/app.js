@@ -96,13 +96,41 @@ function createPrecontractCandidateCard(candidate, onCancelled) {
   cancelButton.type = 'button';
   const message = createElement('p', 'error-message');
   message.hidden = true;
+  const confirmation = createElement('div', 'card');
+  confirmation.hidden = true;
+  confirmation.setAttribute('role', 'group');
+  confirmation.setAttribute('aria-label', '候補のキャンセル確認');
+  const backButton = createElement('button', 'secondary-action', '戻る');
+  backButton.type = 'button';
+  const confirmButton = createElement('button', 'primary-action', '候補をやめる');
+  confirmButton.type = 'button';
+  confirmation.append(
+    createElement('p', 'section-label', 'この候補をやめますか？'),
+    backButton,
+    confirmButton
+  );
   let cancelling = false;
 
-  cancelButton.addEventListener('click', async () => {
-    if (cancelling || !card.isConnected) return;
-    if (!window.confirm('この候補をやめますか？')) return;
-    cancelling = true;
+  cancelButton.addEventListener('click', () => {
+    if (cancelling || !card.isConnected || !confirmation.hidden) return;
+    message.hidden = true;
+    confirmation.hidden = false;
     cancelButton.disabled = true;
+    backButton.focus();
+  });
+
+  backButton.addEventListener('click', () => {
+    if (cancelling || !card.isConnected) return;
+    confirmation.hidden = true;
+    cancelButton.disabled = false;
+    cancelButton.focus();
+  });
+
+  confirmButton.addEventListener('click', async () => {
+    if (cancelling || !card.isConnected || confirmation.hidden) return;
+    cancelling = true;
+    confirmButton.disabled = true;
+    backButton.disabled = true;
     message.hidden = true;
 
     try {
@@ -113,6 +141,14 @@ function createPrecontractCandidateCard(candidate, onCancelled) {
       if (!card.isConnected) return;
 
       if (response?.ok === true && response.code === 'OK') {
+        // Keep the card until the saved candidate is confirmed to be gone.
+        const remainingCandidate = await loadPrecontractCandidate();
+        if (!card.isConnected) return;
+        if (remainingCandidate !== null) {
+          message.textContent = '候補の削除を確認できませんでした。もう一度お試しください';
+          message.hidden = false;
+          return;
+        }
         onCancelled();
       } else {
         message.textContent = response?.code === 'NOT_FOUND'
@@ -126,7 +162,8 @@ function createPrecontractCandidateCard(candidate, onCancelled) {
       }
     } finally {
       cancelling = false;
-      cancelButton.disabled = false;
+      confirmButton.disabled = false;
+      backButton.disabled = false;
     }
   });
 
@@ -142,6 +179,7 @@ function createPrecontractCandidateCard(candidate, onCancelled) {
     description,
     createLink('#/plan', 'primary-action', 'プランを見る'),
     cancelButton,
+    confirmation,
     message
   );
   return card;
@@ -1577,10 +1615,13 @@ cancelButton.addEventListener(
 
       if (response.ok === true) {
         if (response.data?.requiresPurchase === true) {
-          const candidateCard = createPrecontractCandidateCard({
-            draftId: response.data.draftId,
-            name: response.data.target?.name ?? '名称未取得',
-          }, () => renderRegister());
+          // Both screens use the same saved candidate returned by precontract.get.
+          const candidate = await loadPrecontractCandidate();
+          if (!resultArea.isConnected) return;
+          if (candidate === null) throw new Error('PRECONTRACT_CANDIDATE_NOT_FOUND');
+          const candidateCard = createPrecontractCandidateCard(
+            candidate, () => renderRegister()
+          );
           resultArea.append(candidateCard);
           button.hidden = true;
           candidateCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
