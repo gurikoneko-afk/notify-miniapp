@@ -2059,6 +2059,17 @@ async function renderPlan() {
 
     planMessage.hidden = true;
 
+    const purchaseLoading = createElement('p', 'loading');
+    purchaseLoading.append(
+      createElement('span', '', '監視できるか確認しています…'),
+      createElement('br'),
+      createElement('span', '', '30秒ほどかかる場合があります')
+    );
+    purchaseLoading.hidden = true;
+
+    const purchaseButtons = [];
+    let purchaseInProgress = false;
+
     plans.forEach(plan => {
       const card = createElement(
         'div',
@@ -2111,9 +2122,13 @@ async function renderPlan() {
       selectButton.disabled = isCurrent;
 
       if (!isCurrent) {
+  purchaseButtons.push(selectButton);
   selectButton.addEventListener(
     'click',
     async () => {
+      if (purchaseInProgress || !isCurrentScreen()) return;
+      purchaseInProgress = true;
+      purchaseButtons.forEach(button => { button.disabled = true; });
       planMessage.hidden = true;
       planMessage.textContent = '';
 
@@ -2130,6 +2145,7 @@ async function renderPlan() {
           await NotifyApi.plan.select(
             plan.id
           );
+        if (!isCurrentScreen()) return;
 
         if (selectResponse?.ok !== true) {
           planMessage.textContent =
@@ -2155,12 +2171,14 @@ async function renderPlan() {
 
         // ② 決済開始
         selectButton.textContent =
-          '決済を準備中...';
+          '確認中...';
+        purchaseLoading.hidden = false;
 
         const purchaseResponse =
           await NotifyApi.purchase.start(
             selectedPlanId
           );
+        if (!isCurrentScreen()) return;
 
         // 現在はPayment Adapter未接続なので正常
         if (
@@ -2203,15 +2221,19 @@ async function renderPlan() {
         planMessage.hidden = false;
 
       } catch (error) {
+        if (!isCurrentScreen()) return;
         planMessage.textContent =
           '通信に失敗しました。もう一度お試しください';
 
         planMessage.hidden = false;
 
       } finally {
-        selectButton.disabled = false;
-        selectButton.textContent =
-          originalText;
+        purchaseInProgress = false;
+        if (isCurrentScreen()) {
+          purchaseLoading.hidden = true;
+          purchaseButtons.forEach(button => { button.disabled = false; });
+          selectButton.textContent = originalText;
+        }
       }
     }
   );
@@ -2251,6 +2273,7 @@ async function renderPlan() {
 
     plansSection.append(
       addonCard,
+      purchaseLoading,
       planMessage
     );
 

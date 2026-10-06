@@ -1,7 +1,11 @@
 const API_URL =
   'https://appreciation-solving-readings-hat.trycloudflare.com/webhook/notify-miniapp-api';
 
-async function callNotifyApi(action, payload = {}) {
+async function callNotifyApi(
+  action,
+  payload = {},
+  { timeoutMs = 20000 } = {}
+) {
   const auth = await window.NotifyAuth.getApiAuth();
 
   const controller = new AbortController();
@@ -9,7 +13,7 @@ async function callNotifyApi(action, payload = {}) {
   const timeoutId = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, 20000);
+  }, timeoutMs);
 
   try {
     const response = await fetch(API_URL, {
@@ -126,7 +130,8 @@ cancelDraft(draftId) {
     start(planId) {
       return callNotifyApi(
         'purchase.start',
-        { planId }
+        { planId },
+        { timeoutMs: 60000 }
       );
     },
   },
