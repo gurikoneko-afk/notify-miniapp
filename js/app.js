@@ -18,6 +18,15 @@ function createLink(href, className, text) {
   return link;
 }
 
+let activeScreenVersion = 0;
+
+function beginScreenRender() {
+  const version = ++activeScreenVersion;
+  const route = location.hash || '#/home';
+  return () => activeScreenVersion === version &&
+    (location.hash || '#/home') === route;
+}
+
 function updateActiveNav() {
   const route = location.hash || '#/home';
 
@@ -216,6 +225,7 @@ async function renderPrecontractCandidate(section, initialRequest) {
 }
 
 async function renderHome(initialCandidateRequest) {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
 
   app.replaceChildren(
@@ -224,6 +234,7 @@ async function renderHome(initialCandidateRequest) {
 
   try {
     const response = await NotifyApi.home.get();
+    if (!isCurrentScreen()) return;
 
     if (!response.ok) {
       throw new Error(response.code || 'API_ERROR');
@@ -391,6 +402,7 @@ async function renderHome(initialCandidateRequest) {
     await renderPrecontractCandidate(precontractSection, initialCandidateRequest);
 
   } catch (error) {
+    if (!isCurrentScreen()) return;
     const page = createElement(
       'main',
       'page'
@@ -427,6 +439,7 @@ async function renderHome(initialCandidateRequest) {
 }
 
 function renderRegister() {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
 
   const page = createElement('main', 'page');
@@ -1519,7 +1532,11 @@ cancelButton.addEventListener(
   button.hidden = true;
 }
 
+  let resolving = false;
+  let resolveCompleted = false;
+
   async function resolveFavorite() {
+    if (resolving || resolveCompleted || button.hidden || !isCurrentScreen()) return;
     const rawInput =
       valueOf(nameField.field);
 
@@ -1600,6 +1617,7 @@ cancelButton.addEventListener(
     const hints =
       buildHints(selectedCategory);
 
+    resolving = true;
     button.disabled = true;
     button.textContent = '確認中...';
 
@@ -1613,11 +1631,15 @@ cancelButton.addEventListener(
         }
       );
 
+      if (!isCurrentScreen()) return;
+
       if (response.ok === true) {
         if (response.data?.requiresPurchase === true) {
+          resolveCompleted = true;
+          button.hidden = true;
           // Both screens use the same saved candidate returned by precontract.get.
           const candidate = await loadPrecontractCandidate();
-          if (!resultArea.isConnected) return;
+          if (!isCurrentScreen() || !resultArea.isConnected) return;
           if (candidate === null) throw new Error('PRECONTRACT_CANDIDATE_NOT_FOUND');
           const candidateCard = createPrecontractCandidateCard(
             candidate, () => renderRegister()
@@ -1629,6 +1651,7 @@ cancelButton.addEventListener(
         }
 
         showRegisterStep2(response.data, selectedCategory);
+        resolveCompleted = button.hidden;
         return;
       }
 
@@ -1729,13 +1752,15 @@ cancelButton.addEventListener(
       message.hidden = false;
 
     } catch (error) {
+      if (!isCurrentScreen()) return;
       message.textContent =
         '通信に失敗しました。もう一度お試しください';
 
       message.hidden = false;
 
     } finally {
-      button.disabled = false;
+      resolving = false;
+      button.disabled = resolveCompleted;
       button.textContent = '次へ';
     }
   }
@@ -1750,7 +1775,10 @@ cancelButton.addEventListener(
     event => {
       if (
         event.key === 'Enter' &&
-        !button.disabled
+        !button.disabled &&
+        !button.hidden &&
+        !resolving &&
+        !resolveCompleted
       ) {
         event.preventDefault();
         resolveFavorite();
@@ -1788,6 +1816,7 @@ workSection,
 }
 
 async function renderStart() {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
 
   app.replaceChildren(
@@ -1801,6 +1830,7 @@ async function renderStart() {
   try {
     const response =
       await NotifyApi.home.get();
+    if (!isCurrentScreen()) return;
 
     if (response?.ok !== true) {
       throw new Error(
@@ -1840,6 +1870,7 @@ async function renderStart() {
     location.hash = '#/home';
 
   } catch (error) {
+    if (!isCurrentScreen()) return;
     const page = createElement(
       'main',
       'page'
@@ -1878,6 +1909,7 @@ async function renderStart() {
 }
 
 async function renderPlan() {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
 
   app.replaceChildren(
@@ -1891,6 +1923,7 @@ async function renderPlan() {
   try {
     const response =
       await NotifyApi.plan.get();
+    if (!isCurrentScreen()) return;
 
     if (response?.ok !== true) {
       throw new Error(
@@ -2226,6 +2259,7 @@ async function renderPlan() {
     app.replaceChildren(page);
 
   } catch (error) {
+    if (!isCurrentScreen()) return;
     const page = createElement(
       'main',
       'page'
@@ -2264,6 +2298,7 @@ async function renderPlan() {
 }
 
 async function renderFavorites() {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
 
   app.replaceChildren(
@@ -2277,6 +2312,7 @@ async function renderFavorites() {
   try {
     const response =
       await NotifyApi.favorite.list();
+    if (!isCurrentScreen()) return;
 
     if (response?.ok !== true) {
       throw new Error(
@@ -2829,6 +2865,7 @@ settingsMessage.hidden = false;
     app.replaceChildren(page);
 
   } catch (error) {
+    if (!isCurrentScreen()) return;
     app.replaceChildren(
       createElement(
         'p',
@@ -2839,6 +2876,7 @@ settingsMessage.hidden = false;
   }
 }
 function renderComingSoon(title) {
+  beginScreenRender();
   const app = document.getElementById('app');
 
   const page = createElement(
