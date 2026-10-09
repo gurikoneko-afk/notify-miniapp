@@ -1,5 +1,5 @@
 const API_URL =
-  'https://appreciation-solving-readings-hat.trycloudflare.com/webhook/notify-miniapp-api';
+  'https://hooks.refine-agent.com/webhook/notify-miniapp-api';
 
 async function callNotifyApi(
   action,
