@@ -1,11 +1,20 @@
-const API_URL =
-  'https://hooks.refine-agent.com/webhook/notify-miniapp-api';
+function getNotifyApiUrl() {
+  switch (location.origin) {
+    case 'http://127.0.0.1:8080':
+      return 'http://127.0.0.1:5678/webhook/notify-miniapp-api';
+    case 'https://gurikoneko-afk.github.io':
+      return 'https://hooks.refine-agent.com/webhook/notify-miniapp-api';
+    default:
+      throw new Error('API_ORIGIN_NOT_ALLOWED');
+  }
+}
 
 async function callNotifyApi(
   action,
   payload = {},
   { timeoutMs = 20000 } = {}
 ) {
+  const apiUrl = getNotifyApiUrl();
   const auth = await window.NotifyAuth.getApiAuth();
 
   const controller = new AbortController();
@@ -16,7 +25,7 @@ async function callNotifyApi(
   }, timeoutMs);
 
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

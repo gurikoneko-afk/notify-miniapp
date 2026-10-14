@@ -1481,6 +1481,7 @@ cancelButton.type = 'button';
 cancelButton.addEventListener(
   'click',
   async () => {
+    if (!isCurrentScreen()) return;
     registerMessage.hidden = true;
     registerMessage.textContent = '';
 
@@ -1494,6 +1495,8 @@ cancelButton.addEventListener(
           draftId
         );
 
+      if (!isCurrentScreen()) return;
+
       if (response?.ok !== true) {
         throw new Error(
           response?.code || 'API_ERROR'
@@ -1504,6 +1507,7 @@ cancelButton.addEventListener(
       return;
 
     } catch (error) {
+      if (!isCurrentScreen()) return;
       registerMessage.textContent =
         'キャンセルできませんでした。もう一度お試しください';
 
