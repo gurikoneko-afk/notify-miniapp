@@ -78,6 +78,66 @@ function createFavoriteRow(favorite) {
   return row;
 }
 
+// Display-only model: { id, type: 'important' | 'other', targetName,
+// title, displayAt, sourceUrl }. No data is fetched by these renderers.
+function renderNotificationItem(notification) {
+  const card = createElement('article', 'card notification-card');
+  const important = notification.type === 'important';
+
+  card.append(
+    createElement(
+      'span',
+      `notification-type ${important ? 'notification-type-important' : 'notification-type-other'}`,
+      important ? '重要なお知らせ' : 'その他のお知らせ'
+    ),
+    createElement('p', 'notification-target', notification.targetName ?? ''),
+    createElement('h3', 'notification-title', notification.title ?? ''),
+    createElement('time', 'notification-date', notification.displayAt ?? '')
+  );
+
+  try {
+    const source = new URL(notification.sourceUrl);
+    if (source.protocol === 'https:' || source.protocol === 'http:') {
+      const link = createLink(source.href, 'notification-source', '情報元を見る ↗');
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      card.append(link);
+    }
+  } catch {
+    // An unavailable source link must not prevent the card from rendering.
+  }
+
+  return card;
+}
+
+function renderNotificationList(notifications = []) {
+  const list = createElement('div', 'notification-list');
+  const items = notifications.filter(notification =>
+    notification?.type === 'important' || notification?.type === 'other'
+  );
+
+  if (items.length === 0) {
+    list.append(createElement('p', 'card empty-message', 'まだお知らせはありません'));
+  } else {
+    items.forEach(notification => list.append(renderNotificationItem(notification)));
+  }
+
+  return list;
+}
+
+function renderRecentNotifications(notifications = []) {
+  const section = createElement('section', 'recent-notifications');
+  const header = createElement('div', 'section-header');
+
+  header.append(
+    createElement('h2', 'section-title', '最近のお知らせ'),
+    createLink('#/notifications', 'text-link', 'すべて見る →')
+  );
+  section.append(header, renderNotificationList(notifications.slice(0, 3)));
+
+  return section;
+}
+
 async function loadPrecontractCandidate() {
   const response = await NotifyApi.call('precontract.get');
 
@@ -237,7 +297,7 @@ async function renderHome(initialCandidateRequest) {
     if (!isCurrentScreen()) return;
 
     if (!response.ok) {
-      throw new Error(response.code || 'API_ERROR');
+      throw NotifyApi.responseError(response);
     }
 
     const data = response.data;
@@ -389,6 +449,7 @@ async function renderHome(initialCandidateRequest) {
     recentSection.append(recentCard);
 
     page.append(recentSection);
+    page.append(renderRecentNotifications());
 
     page.append(
       createLink(
@@ -1930,9 +1991,7 @@ async function renderPlan() {
     if (!isCurrentScreen()) return;
 
     if (response?.ok !== true) {
-      throw new Error(
-        response?.code || 'API_ERROR'
-      );
+      throw NotifyApi.responseError(response);
     }
 
     const data = response.data ?? {};
@@ -2342,9 +2401,7 @@ async function renderFavorites() {
     if (!isCurrentScreen()) return;
 
     if (response?.ok !== true) {
-      throw new Error(
-        response?.code || 'API_ERROR'
-      );
+      throw NotifyApi.responseError(response);
     }
 
     const favorites =
@@ -2369,6 +2426,8 @@ async function renderFavorites() {
         '推し管理'
       )
     );
+
+    page.append(createLink('#/register', 'primary-action', '＋ 推しを追加する'));
 
     if (favorites.length === 0) {
       page.append(
@@ -2902,6 +2961,19 @@ settingsMessage.hidden = false;
     );
   }
 }
+function renderNotifications() {
+  beginScreenRender();
+  const app = document.getElementById('app');
+  const page = createElement('main', 'page');
+
+  page.append(
+    createElement('h1', 'logo', 'Notify'),
+    createElement('h2', 'page-title', '通知'),
+    renderNotificationList()
+  );
+  app.replaceChildren(page);
+}
+
 function renderComingSoon(title) {
   beginScreenRender();
   const app = document.getElementById('app');
@@ -2955,6 +3027,10 @@ function renderRoute(initialCandidateRequest) {
       renderFavorites();
       break;
 
+    case '#/notifications':
+      renderNotifications();
+      break;
+
     case '#/plan':
       renderPlan();
       break;
@@ -2969,7 +3045,8 @@ async function startApp() {
     document.getElementById('app');
 
   try {
-    await NotifyAuth.init();
+    const authResult = await NotifyAuth.init();
+    if (authResult.loginRedirecting) return;
 
     // Read once on startup; the home screen reuses this request if it is first.
     const initialCandidateRequest = loadPrecontractCandidate();

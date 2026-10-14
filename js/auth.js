@@ -1,13 +1,15 @@
 let activeAuthAdapter = null;
 
 async function initAuth() {
-  if (window.LineAuthAdapter) {
-    activeAuthAdapter = window.LineAuthAdapter;
-  } else {
+  activeAuthAdapter = null;
+  if (!window.LineAuthAdapter) {
     throw new Error('AUTH_ADAPTER_NOT_FOUND');
   }
 
-  return await activeAuthAdapter.init();
+  const adapter = window.LineAuthAdapter;
+  const result = await adapter.init();
+  if (!result.loginRedirecting) activeAuthAdapter = adapter;
+  return result;
 }
 
 async function getApiAuth() {
