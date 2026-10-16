@@ -123,6 +123,11 @@ window.NotifyApi = {
       return callNotifyApi('home.get');
     },
   },
+  notification: {
+    list({ limit = 50 } = {}) {
+      return callNotifyApi('notification.list', { limit });
+    },
+  },
   
 favorite: {
   list() {

@@ -78,11 +78,52 @@ function createFavoriteRow(favorite) {
   return row;
 }
 
+async function loadNotificationItems(limit) {
+  const response = await NotifyApi.notification.list({ limit });
+  const items = response?.data?.items;
+
+  if (response?.ok !== true || !Array.isArray(items) || items.some(item =>
+    !item || typeof item !== 'object' || Array.isArray(item) ||
+    !['important', 'other'].includes(item.type) ||
+    ['id', 'targetName', 'title', 'displayAt', 'sourceUrl'].some(key => typeof item[key] !== 'string') ||
+    !item.id.trim()
+  )) {
+    throw new Error('NOTIFICATION_LIST_INVALID');
+  }
+
+  return items;
+}
+
+function formatNotificationDate(displayAt) {
+  const date = new Date(displayAt);
+  if (Number.isNaN(date.getTime())) return '日時不明';
+  const pad = value => String(value).padStart(2, '0');
+  return `${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 // Display-only model: { id, type: 'important' | 'other', targetName,
 // title, displayAt, sourceUrl }. No data is fetched by these renderers.
 function renderNotificationItem(notification) {
-  const card = createElement('article', 'card notification-card');
+  let sourceUrl;
+  try {
+    const source = new URL(notification.sourceUrl);
+    if (source.protocol === 'https:' || source.protocol === 'http:') {
+      sourceUrl = source.href;
+    }
+  } catch {
+    // An unavailable source must not prevent the card from rendering.
+  }
+
+  const card = createElement(sourceUrl ? 'a' : 'article', 'card notification-card');
+  if (sourceUrl) {
+    card.href = sourceUrl;
+    card.target = '_blank';
+    card.rel = 'noopener noreferrer';
+  }
   const important = notification.type === 'important';
+  if (!important && notification.type !== 'other') {
+    throw new Error('NOTIFICATION_TYPE_INVALID');
+  }
 
   card.append(
     createElement(
@@ -92,34 +133,18 @@ function renderNotificationItem(notification) {
     ),
     createElement('p', 'notification-target', notification.targetName ?? ''),
     createElement('h3', 'notification-title', notification.title ?? ''),
-    createElement('time', 'notification-date', notification.displayAt ?? '')
+    createElement('time', 'notification-date', formatNotificationDate(notification.displayAt))
   );
-
-  try {
-    const source = new URL(notification.sourceUrl);
-    if (source.protocol === 'https:' || source.protocol === 'http:') {
-      const link = createLink(source.href, 'notification-source', '情報元を見る ↗');
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      card.append(link);
-    }
-  } catch {
-    // An unavailable source link must not prevent the card from rendering.
-  }
 
   return card;
 }
 
 function renderNotificationList(notifications = []) {
   const list = createElement('div', 'notification-list');
-  const items = notifications.filter(notification =>
-    notification?.type === 'important' || notification?.type === 'other'
-  );
-
-  if (items.length === 0) {
+  if (notifications.length === 0) {
     list.append(createElement('p', 'card empty-message', 'まだお知らせはありません'));
   } else {
-    items.forEach(notification => list.append(renderNotificationItem(notification)));
+    notifications.forEach(notification => list.append(renderNotificationItem(notification)));
   }
 
   return list;
@@ -136,6 +161,20 @@ function renderRecentNotifications(notifications = []) {
   section.append(header, renderNotificationList(notifications.slice(0, 3)));
 
   return section;
+}
+
+async function loadRecentNotifications(section, isCurrentScreen) {
+  const content = section.querySelector('.notification-list');
+  try {
+    const items = await loadNotificationItems(3);
+    if (!isCurrentScreen() || !section.isConnected) return;
+    content.replaceWith(renderNotificationList(items.slice(0, 3)));
+  } catch {
+    if (!isCurrentScreen() || !section.isConnected) return;
+    content.replaceChildren(
+      createElement('p', 'error-message', 'お知らせを読み込めませんでした')
+    );
+  }
 }
 
 async function loadPrecontractCandidate() {
@@ -449,7 +488,11 @@ async function renderHome(initialCandidateRequest) {
     recentSection.append(recentCard);
 
     page.append(recentSection);
-    page.append(renderRecentNotifications());
+    const notificationSection = renderRecentNotifications();
+    notificationSection.querySelector('.notification-list').replaceChildren(
+      createElement('p', 'loading', 'お知らせを読み込み中...')
+    );
+    page.append(notificationSection);
 
     page.append(
       createLink(
@@ -460,6 +503,7 @@ async function renderHome(initialCandidateRequest) {
     );
 
     app.replaceChildren(page);
+    loadRecentNotifications(notificationSection, isCurrentScreen);
     await renderPrecontractCandidate(precontractSection, initialCandidateRequest);
 
   } catch (error) {
@@ -2961,17 +3005,36 @@ settingsMessage.hidden = false;
     );
   }
 }
-function renderNotifications() {
-  beginScreenRender();
+async function renderNotifications() {
+  const isCurrentScreen = beginScreenRender();
   const app = document.getElementById('app');
   const page = createElement('main', 'page');
+  const content = createElement('div', 'notification-list');
+  content.append(createElement('p', 'loading', 'お知らせを読み込み中...'));
 
   page.append(
     createElement('h1', 'logo', 'Notify'),
     createElement('h2', 'page-title', '通知'),
-    renderNotificationList()
+    content
   );
   app.replaceChildren(page);
+
+  try {
+    const items = await loadNotificationItems(50);
+    if (!isCurrentScreen() || !content.isConnected) return;
+    content.replaceWith(renderNotificationList(items));
+  } catch {
+    if (!isCurrentScreen() || !content.isConnected) return;
+    const retry = createElement('button', 'retry-button', '再試行');
+    retry.type = 'button';
+    retry.addEventListener('click', () => {
+      if (isCurrentScreen()) renderNotifications();
+    });
+    content.replaceChildren(
+      createElement('p', 'error-message', 'お知らせを読み込めませんでした'),
+      retry
+    );
+  }
 }
 
 function renderComingSoon(title) {
