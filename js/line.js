@@ -11,7 +11,7 @@ function resolveLineLiffId() {
 }
 
 window.LineAuthAdapter = {
-  async init() {
+  async init({ recoveryAttempted = false } = {}) {
     const liffId = resolveLineLiffId();
     try {
       await liff.init({ liffId });
@@ -28,6 +28,8 @@ window.LineAuthAdapter = {
       if (location.origin === 'https://gurikoneko-afk.github.io') {
         throw new Error('PROD_EXTERNAL_LOGIN_NOT_READY');
       }
+
+      if (recoveryAttempted) throw new Error('AUTH_RECOVERY_FAILED');
 
       try {
         liff.login({ redirectUri: window.location.href });
@@ -58,6 +60,21 @@ window.LineAuthAdapter = {
       throw new Error('LINE_LOGIN_REQUIRED');
     }
 
+    // Decoded expiry is only a UX hint; the backend still verifies every token.
+    let exp;
+    try {
+      if (typeof liff.getDecodedIDToken === 'function') {
+        exp = liff.getDecodedIDToken()?.exp;
+      }
+    } catch {
+      // If expiry cannot be determined, retain the normal backend verification.
+    }
+    if (typeof exp === 'number' && Number.isFinite(exp) && Date.now() / 1000 >= exp) {
+      const error = new Error('AUTH_REAUTH_REQUIRED');
+      error.code = 'AUTH_REAUTH_REQUIRED';
+      throw error;
+    }
+
     const idToken = liff.getIDToken();
 
     if (!idToken) {
@@ -67,5 +84,23 @@ window.LineAuthAdapter = {
     return {
       idToken,
     };
+  },
+
+  async recoverAuth() {
+    resolveLineLiffId();
+    const isInClient = liff.isInClient();
+    if (isInClient) {
+      window.location.reload();
+      return;
+    }
+    if (location.origin === 'https://dev.refine-agent.com') {
+      liff.logout();
+      liff.login({ redirectUri: window.location.href });
+      return;
+    }
+    if (location.origin === 'http://127.0.0.1:8080') {
+      throw new Error('LINE_LOGIN_REQUIRES_DEV_ORIGIN');
+    }
+    throw new Error('PROD_EXTERNAL_LOGIN_NOT_READY');
   },
 };

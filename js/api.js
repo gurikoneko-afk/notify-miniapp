@@ -56,6 +56,8 @@ async function callNotifyApi(
   try {
     auth = await window.NotifyAuth.getApiAuth();
   } catch (error) {
+    if (error?.code === 'AUTH_REAUTH_REQUIRED') await window.NotifyAuth.recoverAuth();
+    if (error?.authRecoveryRequired) throw error;
     const authCodes = ['AUTH_NOT_INITIALIZED', 'AUTH_ADAPTER_NOT_FOUND',
       'AUTH_REQUIRED', 'LINE_ID_TOKEN_UNAVAILABLE'];
     const code = authCodes.includes(error?.message) ? error.message : 'API_AUTH_FAILED';
@@ -98,14 +100,21 @@ async function callNotifyApi(
 
     if (timedOut) throw new Error('API_TIMEOUT');
     boundary = 'API_HTTP_ERROR';
+    if (response.status === 401 && result?.code === 'AUTH_REAUTH_REQUIRED') {
+      await window.NotifyAuth.recoverAuth();
+    }
     if (!response.ok) {
       throw new Error(
         result?.code || `API_ERROR_${response.status}`
       );
     }
 
+    // A response started before recovery must not resume a stale operation.
+    if (window.NotifyAuth.isRecoveringAuth()) await window.NotifyAuth.recoverAuth();
+    if (result?.ok === true) window.NotifyAuth.clearRecoveryAttempt();
     return result;
   } catch (error) {
+    if (error?.authRecoveryRequired) throw error;
     if (timedOut) throw withDevApiDiagnostic(new Error('API_TIMEOUT'), 'API_TIMEOUT');
     throw withDevApiDiagnostic(error, boundary);
   } finally {

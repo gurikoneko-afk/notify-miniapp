@@ -1,3 +1,13 @@
+function handleAuthRecoveryError(error) {
+  if (error?.authRecoveryStarted || window.NotifyAuth.isRecoveringAuth()) return true;
+  if (!error?.authRecoveryRequired) return false;
+  document.getElementById('app').replaceChildren(
+    createElement('p', 'error-message',
+      'ログイン情報を更新できませんでした。LINEからもう一度開いてください。')
+  );
+  return true;
+}
+
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
 
@@ -169,8 +179,9 @@ async function loadRecentNotifications(section, isCurrentScreen) {
     const items = await loadNotificationItems(3);
     if (!isCurrentScreen() || !section.isConnected) return;
     content.replaceWith(renderNotificationList(items.slice(0, 3)));
-  } catch {
+  } catch (error) {
     if (!isCurrentScreen() || !section.isConnected) return;
+    if (handleAuthRecoveryError(error)) return;
     content.replaceChildren(
       createElement('p', 'error-message', 'お知らせを読み込めませんでした')
     );
@@ -263,8 +274,9 @@ function createPrecontractCandidateCard(candidate, onCancelled) {
           ? '候補が見つかりません' : '候補を削除できませんでした';
         message.hidden = false;
       }
-    } catch {
+    } catch (error) {
       if (card.isConnected) {
+        if (handleAuthRecoveryError(error)) return;
         message.textContent = '候補を削除できませんでした';
         message.hidden = false;
       }
@@ -313,8 +325,9 @@ async function renderPrecontractCandidate(section, initialRequest) {
       section.replaceChildren();
       section.hidden = true;
     }));
-  } catch {
+  } catch (error) {
     if (section.isConnected) {
+      if (handleAuthRecoveryError(error)) return;
       section.hidden = false;
       section.replaceChildren(
         createElement('p', 'error-message', '契約前候補を確認できませんでした')
@@ -508,6 +521,7 @@ async function renderHome(initialCandidateRequest) {
 
   } catch (error) {
     if (!isCurrentScreen()) return;
+    if (handleAuthRecoveryError(error)) return;
     const page = createElement(
       'main',
       'page'
@@ -1551,6 +1565,7 @@ cancelButton.type = 'button';
         registerMessage.hidden = false;
 
       } catch (error) {
+        if (handleAuthRecoveryError(error)) return;
         registerMessage.textContent =
           '通信に失敗しました。もう一度お試しください';
 
@@ -1613,6 +1628,7 @@ cancelButton.addEventListener(
 
     } catch (error) {
       if (!isCurrentScreen()) return;
+      if (handleAuthRecoveryError(error)) return;
       registerMessage.textContent =
         'キャンセルできませんでした。もう一度お試しください';
 
@@ -1862,6 +1878,7 @@ cancelButton.addEventListener(
 
     } catch (error) {
       if (!isCurrentScreen()) return;
+      if (handleAuthRecoveryError(error)) return;
       message.textContent =
         '通信に失敗しました。もう一度お試しください';
 
@@ -1980,6 +1997,7 @@ async function renderStart() {
 
   } catch (error) {
     if (!isCurrentScreen()) return;
+    if (handleAuthRecoveryError(error)) return;
     const page = createElement(
       'main',
       'page'
@@ -2329,6 +2347,7 @@ async function renderPlan() {
 
       } catch (error) {
         if (!isCurrentScreen()) return;
+        if (handleAuthRecoveryError(error)) return;
         planMessage.textContent =
           '通信に失敗しました。もう一度お試しください';
 
@@ -2390,6 +2409,7 @@ async function renderPlan() {
 
   } catch (error) {
     if (!isCurrentScreen()) return;
+    if (handleAuthRecoveryError(error)) return;
     const page = createElement(
       'main',
       'page'
@@ -2596,6 +2616,7 @@ async function renderFavorites() {
                 : '再開';
 
           } catch (error) {
+            if (handleAuthRecoveryError(error)) return;
             settingsMessage.className =
   'error-message';
 
@@ -2722,6 +2743,7 @@ confirmDeleteButton.addEventListener(
       }
 
     } catch (error) {
+      if (handleAuthRecoveryError(error)) return;
       deleteMessage.textContent =
         '削除できませんでした。もう一度お試しください。';
 
@@ -2942,6 +2964,7 @@ settingsMessage.textContent =
 settingsMessage.hidden = false;
 
     } catch (error) {
+      if (handleAuthRecoveryError(error)) return;
       settingsMessage.className =
   'error-message';
 
@@ -2996,6 +3019,7 @@ settingsMessage.hidden = false;
 
   } catch (error) {
     if (!isCurrentScreen()) return;
+    if (handleAuthRecoveryError(error)) return;
     app.replaceChildren(
       createElement(
         'p',
@@ -3023,8 +3047,9 @@ async function renderNotifications() {
     const items = await loadNotificationItems(50);
     if (!isCurrentScreen() || !content.isConnected) return;
     content.replaceWith(renderNotificationList(items));
-  } catch {
+  } catch (error) {
     if (!isCurrentScreen() || !content.isConnected) return;
+    if (handleAuthRecoveryError(error)) return;
     const retry = createElement('button', 'retry-button', '再試行');
     retry.type = 'button';
     retry.addEventListener('click', () => {
@@ -3123,6 +3148,7 @@ async function startApp() {
     renderRoute(initialCandidateRequest);
 
   } catch (error) {
+    if (handleAuthRecoveryError(error)) return;
     app.replaceChildren(
       createElement(
         'p',
