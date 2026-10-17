@@ -507,14 +507,6 @@ async function renderHome(initialCandidateRequest) {
     );
     page.append(notificationSection);
 
-    page.append(
-      createLink(
-        '#/plan',
-        'secondary-action',
-        'プラン・利用状況を見る →'
-      )
-    );
-
     app.replaceChildren(page);
     loadRecentNotifications(notificationSection, isCurrentScreen);
     await renderPrecontractCandidate(precontractSection, initialCandidateRequest);
@@ -2506,10 +2498,13 @@ async function renderFavorites() {
       return;
     }
 
+    const favoritesGrid = createElement('div', 'favorites-grid');
+    page.append(favoritesGrid);
+
     for (const favorite of favorites) {
       const card = createElement(
         'section',
-        'card'
+        'card favorite-card'
       );
 
       const settings =
@@ -2529,10 +2524,8 @@ async function renderFavorites() {
       const statusElement =
         createElement(
           'p',
-          '',
-          currentEnabled
-            ? 'Monitoring中'
-            : '停止中'
+          'favorite-card-status',
+          `監視：${currentEnabled ? 'ON' : 'OFF'}`
         );
 
       const digestElement =
@@ -2547,8 +2540,8 @@ async function renderFavorites() {
       const highSpeedElement =
         createElement(
           'p',
-          '',
-          `高速監視オプション：${
+          'favorite-card-status',
+          `高速監視：${
             currentHighSpeed
               ? 'ON'
               : 'OFF'
@@ -2558,12 +2551,11 @@ async function renderFavorites() {
       card.append(
         createElement(
           'h2',
-          '',
+          'favorite-card-name',
           favorite.canonicalName ??
             '名称未取得'
         ),
         statusElement,
-        digestElement,
         highSpeedElement
       );
 
@@ -2606,9 +2598,7 @@ async function renderFavorites() {
               result?.data?.enabled === true;
 
             statusElement.textContent =
-              currentEnabled
-                ? 'Monitoring中'
-                : '停止中';
+              `監視：${currentEnabled ? 'ON' : 'OFF'}`;
 
             toggleButton.textContent =
               currentEnabled
@@ -2758,8 +2748,8 @@ confirmDeleteButton.addEventListener(
       const settingsButton =
         createElement(
           'button',
-          '',
-          '設定変更'
+          'favorite-card-setting-button',
+          '設定 ＞'
         );
 
       settingsButton.type = 'button';
@@ -2768,6 +2758,20 @@ confirmDeleteButton.addEventListener(
         document.createElement('div');
 
       settingsPanel.hidden = true;
+      settingsPanel.className = 'favorite-card-settings';
+
+      const cardDetails = createElement('div', 'favorite-card-details');
+      cardDetails.hidden = true;
+      settingsButton.setAttribute('aria-expanded', 'false');
+
+      function setSettingsExpanded(expanded) {
+        card.classList.toggle('is-expanded', expanded);
+        cardDetails.hidden = !expanded;
+        settingsPanel.hidden = !expanded;
+        settingsButton.setAttribute('aria-expanded', String(expanded));
+        settingsButton.textContent = expanded ? '閉じる' : '設定 ＞';
+        if (!expanded) deleteConfirm.hidden = true;
+      }
       
 　　　　const settingsMessage =
   createElement(
@@ -2874,7 +2878,7 @@ settingsMessage.hidden = true;
         'click',
         () => {
           resetSettingsForm();
-          settingsPanel.hidden = false;
+          setSettingsExpanded(!card.classList.contains('is-expanded'));
         }
       );
 
@@ -2883,7 +2887,7 @@ settingsMessage.hidden = true;
         'click',
         () => {
           resetSettingsForm();
-          settingsPanel.hidden = true;
+          setSettingsExpanded(false);
         }
       );
 
@@ -2946,13 +2950,13 @@ settingsMessage.hidden = true;
           : '通常情報：通知しない';
 
       highSpeedElement.textContent =
-        `高速監視オプション：${
+        `高速監視：${
           currentHighSpeed
             ? 'ON'
             : 'OFF'
         }`;
 
-      settingsPanel.hidden = true;
+      setSettingsExpanded(false);
 
       settingsMessage.className =
   'empty-message';
@@ -2969,7 +2973,9 @@ settingsMessage.hidden = false;
   'error-message';
 
 settingsMessage.textContent =
-  '通知設定を変更できませんでした。もう一度お試しください。';
+  error?.message === 'HIGH_SPEED_LIMIT'
+    ? '高速監視オプションの利用枠がいっぱいです'
+    : '通知設定を変更できませんでした。もう一度お試しください。';
 
 settingsMessage.hidden = false;
 
@@ -3003,16 +3009,16 @@ settingsMessage.hidden = false;
       );
 
 
-      card.append(
-  settingsButton,
-  toggleButton,
-  deleteButton,
-  settingsPanel,
-  settingsMessage,
-  deleteConfirm
-);
+      cardDetails.append(
+        digestElement,
+        toggleButton,
+        deleteButton,
+        settingsPanel,
+        deleteConfirm
+      );
+      card.append(settingsButton, cardDetails, settingsMessage);
 
-      page.append(card);
+      favoritesGrid.append(card);
     }
 
     app.replaceChildren(page);
