@@ -1,4 +1,62 @@
+let refreshAuthDebugPanel = null;
+
+// Temporary PROD-only diagnostics. Never start authentication or API requests.
+function setupAuthDebugPanel() {
+  try {
+    if (location.origin !== 'https://gurikoneko-afk.github.io' ||
+        new URLSearchParams(location.search).get('auth-debug') !== '1') return;
+    if (!window.liff?.ready || typeof window.liff.ready.then !== 'function') return;
+
+    let liffReady = false;
+    let panel = null;
+    refreshAuthDebugPanel = () => {
+      if (!liffReady) return;
+      try {
+        const isInClient = window.liff.isInClient();
+        const isLoggedIn = window.liff.isLoggedIn();
+        if (typeof isInClient !== 'boolean' || typeof isLoggedIn !== 'boolean') return;
+
+        let storageReadable = false;
+        let recoveryFlagPresent = false;
+        try {
+          recoveryFlagPresent =
+            sessionStorage.getItem('notify_auth_recovery_attempted') !== null;
+          storageReadable = true;
+        } catch {
+          // false here means presence could not be observed when storage is unreadable.
+        }
+
+        const values = {
+          isInClient,
+          isLoggedIn,
+          idTokenReady: Boolean(window.liff.getIDToken()),
+          decodedTokenReady: Boolean(window.liff.getDecodedIDToken()),
+          storageReadable,
+          recoveryFlagPresent,
+        };
+        if (!panel) {
+          panel = createElement('pre', 'auth-debug-panel');
+          panel.setAttribute('aria-label', 'Temporary authentication diagnostics');
+          document.body.append(panel);
+        }
+        panel.textContent = 'Auth debug\n' +
+          Object.entries(values).map(([key, value]) => key + ': ' + value).join('\n');
+      } catch {
+        if (panel) panel.textContent = 'Auth debug: unavailable';
+      }
+    };
+
+    window.liff.ready.then(() => {
+      liffReady = true;
+      refreshAuthDebugPanel();
+    }).catch(() => {});
+  } catch {
+    // Diagnostics must never interrupt normal startup.
+  }
+}
+
 function handleAuthRecoveryError(error) {
+  refreshAuthDebugPanel?.();
   if (error?.authRecoveryStarted || window.NotifyAuth.isRecoveringAuth()) return true;
   if (!error?.authRecoveryRequired) return false;
   document.getElementById('app').replaceChildren(
@@ -3138,6 +3196,8 @@ async function startApp() {
   const app =
     document.getElementById('app');
 
+  setupAuthDebugPanel();
+
   try {
     const authResult = await NotifyAuth.init();
     if (authResult.loginRedirecting) return;
@@ -3162,6 +3222,8 @@ async function startApp() {
         'Notifyを開始できませんでした'
       )
     );
+  } finally {
+    refreshAuthDebugPanel?.();
   }
 }
 
