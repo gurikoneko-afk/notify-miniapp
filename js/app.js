@@ -2534,7 +2534,7 @@ async function renderFavorites() {
       const digestElement =
         createElement(
           'p',
-          '',
+          'favorite-card-digest-summary',
           currentDigestDelivery === 'daily'
             ? '通常情報：21時まとめ'
             : '通常情報：通知しない'
@@ -2559,8 +2559,23 @@ async function renderFavorites() {
             '名称未取得'
         ),
         statusElement,
+        createElement(
+          'p',
+          'favorite-card-help favorite-card-monitoring-help',
+          '約60分前後で新しい情報を確認します'
+        ),
         highSpeedElement
       );
+
+      const highSpeedHelp = createElement('div', 'favorite-card-high-speed-help');
+      for (const text of [
+        '約5分前後で新しい情報を確認します',
+        '※停止中も、高速監視がONの間は利用枠を使用します',
+        '高速監視を別の推しに使う場合は、この推しの高速監視オプションのチェックを外して下さい',
+      ]) {
+        highSpeedHelp.append(createElement('p', 'favorite-card-help', text));
+      }
+      card.append(highSpeedHelp);
 
 
       // =====================================
@@ -2572,7 +2587,7 @@ async function renderFavorites() {
           'button',
           '',
           currentEnabled
-            ? '停止'
+            ? '一時停止'
             : '再開'
         );
 
@@ -2605,7 +2620,7 @@ async function renderFavorites() {
 
             toggleButton.textContent =
               currentEnabled
-                ? '停止'
+                ? '一時停止'
                 : '再開';
 
           } catch (error) {
@@ -2990,10 +3005,23 @@ settingsMessage.hidden = false;
 );
 
 
+      const settingsActions = createElement('div', 'favorite-card-settings-actions');
+      settingsActions.append(saveButton, cancelButton);
+
+      const managementActions = createElement('div', 'favorite-card-management-actions');
+      managementActions.append(toggleButton, deleteButton);
+
+      const managementArea = createElement('section', 'favorite-card-management');
+      managementArea.append(
+        createElement('p', 'favorite-card-management-title', 'この推しの管理'),
+        managementActions,
+        deleteConfirm
+      );
+
       settingsPanel.append(
         createElement(
           'p',
-          '',
+          'favorite-card-settings-heading',
           '通常情報'
         ),
         dailyLabel,
@@ -3002,22 +3030,18 @@ settingsMessage.hidden = false;
         document.createElement('br'),
         createElement(
           'p',
-          '',
+          'favorite-card-settings-heading',
           '高速監視オプション'
         ),
         highSpeedLabel,
-        document.createElement('br'),
-        saveButton,
-        cancelButton
+        settingsActions
       );
 
 
       cardDetails.append(
         digestElement,
-        toggleButton,
-        deleteButton,
         settingsPanel,
-        deleteConfirm
+        managementArea
       );
       card.append(settingsButton, cardDetails, settingsMessage);
 
