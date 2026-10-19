@@ -628,3 +628,39 @@ a {
 .favorite-card .favorite-card-management-actions > button {
   margin: 0;
 }
+
+
+/* Plan tab */
+.plan-page .plan-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.plan-page .plan-current-card,
+.plan-page .plan-option-card,
+.plan-page .plan-addon-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px 20px;
+  overflow-wrap: anywhere;
+}
+
+.plan-page .plan-name,
+.plan-page .plan-current-card > .section-label {
+  margin: 0;
+}
+
+.plan-page .plan-card-detail {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.plan-page .plan-option-card > .primary-action,
+.plan-page .plan-option-card > .secondary-action {
+  margin: 4px 0 0;
+}

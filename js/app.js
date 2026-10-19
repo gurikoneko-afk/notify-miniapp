@@ -359,12 +359,7 @@ async function renderHome(initialCandidateRequest) {
     const header = createElement('header', 'home-header');
 
     header.append(
-      createElement('h1', 'logo', 'Notify'),
-      createElement(
-        'p',
-        'header-subtitle',
-        '必要な情報をチェックしています'
-      )
+      createElement('h1', 'logo', 'Notify')
     );
 
     page.append(header);
@@ -2059,7 +2054,7 @@ async function renderPlan() {
 
     const page = createElement(
       'main',
-      'page'
+      'page plan-page'
     );
 
     page.append(
@@ -2084,7 +2079,7 @@ async function renderPlan() {
     if (current) {
       const currentCard = createElement(
         'section',
-        'card usage-card'
+        'card usage-card plan-current-card'
       );
 
       currentCard.append(
@@ -2100,12 +2095,12 @@ async function renderPlan() {
         ),
         createElement(
           'p',
-          'empty-message',
+          'empty-message plan-card-detail',
           `推し ${current.targetLimit ?? 0}枠`
         ),
         createElement(
           'p',
-          'empty-message',
+          'empty-message plan-card-detail',
           `高速監視オプション ${current.includedHighSpeedSlots ?? 0}枠`
         )
       );
@@ -2134,7 +2129,7 @@ async function renderPlan() {
           currentCard.append(
             createElement(
               'p',
-              'empty-message',
+              'empty-message plan-card-detail',
               `現在の契約期間：${date.toLocaleDateString(
                 'ja-JP'
               )}まで`
@@ -2144,14 +2139,6 @@ async function renderPlan() {
       }
 
       page.append(currentCard);
-    } else {
-      page.append(
-        createElement(
-          'p',
-          'empty-message',
-          '利用するプランを選んでください'
-        )
-      );
     }
 
     // -------------------------
@@ -2160,7 +2147,7 @@ async function renderPlan() {
 
     const plansSection = createElement(
       'section',
-      'recent-section'
+      'recent-section plan-options'
     );
 
     plansSection.append(
@@ -2193,14 +2180,18 @@ async function renderPlan() {
     plans.forEach(plan => {
       const card = createElement(
         'div',
-        'card'
+        'card plan-option-card'
       );
 
       card.append(
         createElement(
           'h3',
           'plan-name',
-          plan.name ?? 'プラン'
+          new Map([
+            ['5枠プラン', '推し5枠プラン'],
+            ['10枠プラン', '推し10枠プラン'],
+            ['15枠プラン', '推し15枠プラン'],
+          ]).get(plan.name) ?? plan.name ?? 'プラン'
         )
       );
 
@@ -2214,13 +2205,8 @@ async function renderPlan() {
         ),
         createElement(
           'p',
-          'empty-message',
-          `推し ${plan.targetLimit ?? 0}枠`
-        ),
-        createElement(
-          'p',
-          'empty-message',
-          `高速監視オプション ${plan.includedHighSpeedSlots ?? 0}枠付き`
+          'empty-message plan-card-detail',
+          `高速監視 ${plan.includedHighSpeedSlots ?? 0}枠付き`
         )
       );
 
@@ -2371,7 +2357,7 @@ async function renderPlan() {
 
     const addonCard = createElement(
       'div',
-      'card'
+      'card plan-addon-card'
     );
 
     addonCard.append(
@@ -2387,8 +2373,8 @@ async function renderPlan() {
       ),
       createElement(
         'p',
-        'empty-message',
-        '高速監視オプションの利用枠を追加できます'
+        'empty-message plan-card-detail',
+        '通常監視は60分前後、高速監視は5分前後です'
       )
     );
 
