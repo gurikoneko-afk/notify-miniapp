@@ -557,12 +557,7 @@ function renderRegister() {
 
   page.append(
     createElement('h1', 'logo', 'Notify'),
-    createElement('h2', 'page-title', '推しを追加'),
-    createElement(
-      'p',
-      'section-label',
-      '誰の情報をチェックしますか？'
-    )
+    createElement('h2', 'page-title', '推しを追加')
   );
 
   const formCard = createElement(
@@ -578,18 +573,18 @@ function renderRegister() {
   ) {
     const wrapper = createElement(
       'div',
-      'register-field'
+      'register-field field'
     );
 
     const label = createElement(
       'label',
-      'register-label',
+      'register-label field-label',
       labelText
     );
 
     const field = createElement(
       'input',
-      'register-input'
+      'register-input field-control'
     );
 
     field.type = type;
@@ -622,18 +617,18 @@ function renderRegister() {
 
   const categoryWrapper = createElement(
     'div',
-    'register-field'
+    'register-field field'
   );
 
   const categoryLabel = createElement(
     'label',
-    'register-label register-label-primary',
+    'register-label register-label-primary field-label',
     '種類 *'
   );
 
   const categorySelect = createElement(
     'select',
-    'register-input'
+    'register-input field-control'
   );
 
   const categoryOptions = [
@@ -667,13 +662,13 @@ function renderRegister() {
 
   const categoryNotice = createElement(
   'p',
-  'empty-message',
+  'register-help field-help',
   '種類は推し検索時のヒントです。正確な選択が推し発見の助けになっております。'
 );
   
   const hintMessage = createElement(
     'p',
-    'empty-message',
+    'register-help field-help',
     '分かる範囲でOKです。2〜3個あると見つけやすくなります'
   );
 
@@ -875,6 +870,10 @@ creatorSection.append(
     hintMessage.hidden =
       !hasCategory;
 
+    commonTitle.hidden = !hasCategory;
+    officialUrl.wrapper.hidden = !hasCategory;
+    noteWrapper.hidden = !hasCategory;
+
     Object.entries(categorySections)
       .forEach(([category, section]) => {
         section.hidden =
@@ -890,7 +889,7 @@ creatorSection.append(
 
   const commonTitle = createElement(
     'p',
-    'section-label',
+    'section-label register-section-heading',
     'その他のヒント'
   );
 
@@ -907,18 +906,18 @@ officialUrl.field.spellcheck = false;
 
   const noteWrapper = createElement(
     'div',
-    'register-field'
+    'register-field field'
   );
 
   const noteLabel = createElement(
     'label',
-    'register-label',
+    'register-label field-label',
     'その他の補足'
   );
 
   const note = createElement(
     'textarea',
-    'register-input'
+    'register-input field-control'
   );
 
   note.placeholder =
@@ -931,6 +930,10 @@ officialUrl.field.spellcheck = false;
     noteLabel,
     note
   );
+
+  commonTitle.hidden = true;
+  officialUrl.wrapper.hidden = true;
+  noteWrapper.hidden = true;
 
   // -------------------------
   // メッセージ・結果
